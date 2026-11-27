@@ -370,7 +370,7 @@ try{
 }catch(e){}
 if(!NativeSR) engineEl.textContent="";
 
-let cur=null; // {btn,fb,targets,onOk,heard,partial,finished,timer}
+let cur=null, lastNativeAbort=0; // {btn,fb,targets,onOk,heard,partial,finished,timer}
 function setBtn(btn,on){btn.classList.toggle("on",on);btn.innerHTML=on?"⏹ סיימתי":"🎤 קראו בקול";btn.setAttribute("aria-pressed",on?"true":"false")}
 function finish(session,texts){
   if(!session||session.finished) return; session.finished=true;
@@ -407,13 +407,13 @@ function listen(btn,fb,targets,onOk){
   if(cur&&cur.btn===btn){ // stop pressed
     const s=cur;
     if(s.engine==="dict") dict.stop().then(()=>finish(s,[s.heard+" "+(s.partial||"")])).catch(()=>finish(s,[s.heard]));
-    else if(s.rec) try{s.rec.stop()}catch(e){finish(s,s.all)}
+    else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){finish(s,s.all)} }
     return;
   }
-  if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.rec) try{old.rec.abort()}catch(e){} old.finished=true; setBtn(old.btn,false); cur=null; }
+  if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.rec){ old.stopReq=true; lastNativeAbort=Date.now(); try{old.rec.abort()}catch(e){} } old.finished=true; setBtn(old.btn,false); cur=null; }
   const s={btn,fb,targets,onOk,heard:"",partial:"",all:[],finished:false};
   cur=s; setBtn(btn,true); say(fb,"info","מקשיב… קראו עכשיו");
-  s.timer=setTimeout(()=>{ if(cur===s){ if(s.engine==="dict") dict.stop().catch(()=>{}); else if(s.rec) try{s.rec.stop()}catch(e){} } },15000);
+  s.timer=setTimeout(()=>{ if(cur===s){ if(s.engine==="dict") dict.stop().catch(()=>{}); else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){} } } },15000);
   if(dict){
     s.engine="dict";
     const opts=dictLang?{language:dictLang}:undefined;
@@ -429,27 +429,48 @@ function listen(btn,fb,targets,onOk){
     });
     return;
   }
-  if(NativeSR&&!nativeBlocked){ startNative(s); return }
-  noEngine(s);
+  if(NativeSR&&!nativeBlocked){ if(lastNativeAbort&&Date.now()-lastNativeAbort<400) setTimeout(()=>{ if(cur===s) startNative(s) },400); else startNative(s); return }
+  noEngine(s,"בדפדפן הזה אין בדיקת קריאה. "+openHint()+" או סמנו ✓ ידנית.");
 }
-function startNative(s){
-  s.engine="native";
-  let rec; try{ rec=new NativeSR() }catch(e){ nativeBlocked=true; noEngine(s); return }
+const IN_APP=/WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
+const IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function openHint(){ return IS_IOS?"פתחו את הקישור בספארי (⋯ ← פתיחה בספארי).":"פתחו את הקישור בכרום (⋮ ← פתיחה בכרום)."; }
+function startNative(s,tries){
+  tries=tries||0;
+  s.engine="native"; if(!s.deadline) s.deadline=Date.now()+15000; if(!s.prevAll) s.prevAll=[];
+  let rec; try{ rec=new NativeSR() }catch(e){ nativeBlocked=true; noEngine(s,"בדפדפן הזה אין בדיקת קריאה. "+openHint()+" או סמנו ✓ ידנית."); return }
   s.rec=rec; rec.lang="he-IL"; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=false;
   rec.onresult=ev=>{
     const texts=[]; let joined="";
     for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; joined+=" "+r[0].transcript; for(let k=0;k<r.length;k++) texts.push(r[k].transcript) }
-    texts.unshift(joined); s.all=texts;
-    if(texts.some(t=>grade(s.targets,t)==="ok")){ try{rec.stop()}catch(e){} finish(s,texts) }
+    texts.unshift(joined); s.all=s.prevAll.concat(texts);
+    if(texts.some(t=>grade(s.targets,t)==="ok")){ s.stopReq=true; try{rec.stop()}catch(e){} finish(s,texts) }
     else say(s.fb,"info","מקשיב… "+joined.trim());
   };
   rec.onerror=ev=>{
-    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){ nativeBlocked=true; noEngine(s,"אין גישה למיקרופון כאן. אפשר לסמן ✓ ידנית, או לפתוח את הדף בכרום."); }
-    else if(ev.error==="no-speech") finish(s,[]);
-    else if(ev.error!=="aborted") finish(s,s.all);
+    if(s.rec!==rec) return;
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){
+      nativeBlocked=true; s.stopReq=true;
+      noEngine(s, IN_APP?"כאן אין גישה למיקרופון. "+openHint()
+        : IS_IOS?"אין גישה למיקרופון. באייפון צריך להפעיל את Siri והכתבה (הגדרות ← כללי ← מקלדת ← הפעלת הכתבה) ולאשר מיקרופון. אפשר גם לסמן ✓ ידנית."
+        : "אין גישה למיקרופון. אשרו גישה למיקרופון בדפדפן, או סמנו ✓ ידנית.");
+    }
+    else if(ev.error==="network"){ s.stopReq=true; noEngine(s,"בדיקת הקריאה צריכה חיבור לאינטרנט. נסו שוב."); }
+    else if(ev.error==="audio-capture"){ s.stopReq=true; noEngine(s,"המיקרופון תפוס או לא נמצא. סגרו אפליקציות אחרות ונסו שוב."); }
+    // no-speech / aborted: onend decides whether to keep listening
   };
-  rec.onend=()=>finish(s,s.all);
-  try{ rec.start() }catch(e){ noEngine(s) }
+  rec.onend=()=>{
+    if(s.finished||s.rec!==rec) return;
+    // Phones stop after a short pause. Keep listening until 15s or "סיימתי".
+    if(!s.stopReq&&Date.now()<s.deadline-800){ s.prevAll=s.all.slice(); setTimeout(()=>{ if(!s.finished&&cur===s) startNative(s) },250); return }
+    finish(s,s.all);
+  };
+  try{ rec.start() }
+  catch(e){
+    // Previous recognizer may still be closing; wait and retry.
+    if(tries<3){ setTimeout(()=>{ if(!s.finished&&cur===s) startNative(s,tries+1) },400); }
+    else noEngine(s,"לא הצלחתי להפעיל את המיקרופון. נסו שוב בעוד רגע.");
+  }
 }
 function micButton(fb,targets,onOk){
   const b=document.createElement("button"); b.type="button"; b.className="mic"; setBtn(b,false);
