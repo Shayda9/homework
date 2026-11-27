@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<title>דפי קריאה לשבת 4–6</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;600;800&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow notebook column; each worksheet is a "page" card; activities stack inside. */
+:root{
+  --paper:#F4F7FC; --sheet:#FFFFFF; --ink:#1C2A4A; --soft:#5B6785; --line:#D5DDEC;
+  --pencil:#FFC83D; --pencil-ink:#7A5300; --ok:#1F8F5F; --ok-bg:#E3F5EC; --retry:#C9543B; --retry-bg:#FCEBE6;
+  --accent:#2F5BD3; --accent-bg:#E6EDFC;
+  --b1:#FF8A80; --b2:#FFD166; --b3:#7BD389; --b4:#7FB2FF; --b5:#C79BFF;
+  --f-ui:"Rubik","Arial Hebrew",Arial,sans-serif;
+  --f-nq:"Noto Sans Hebrew","Arial Hebrew","David",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11172A; --sheet:#1A2238; --ink:#EAF0FF; --soft:#A6B2D3; --line:#2E3A5A;
+  --pencil:#FFC83D; --pencil-ink:#FFE7A6; --ok:#5DD39E; --ok-bg:#163A2C; --retry:#FF9A80; --retry-bg:#40221C;
+  --accent:#8EAEFF; --accent-bg:#22305A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#11172A; --sheet:#1A2238; --ink:#EAF0FF; --soft:#A6B2D3; --line:#2E3A5A;
+  --pencil:#FFC83D; --pencil-ink:#FFE7A6; --ok:#5DD39E; --ok-bg:#163A2C; --retry:#FF9A80; --retry-bg:#40221C;
+  --accent:#8EAEFF; --accent-bg:#22305A; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.55;direction:rtl;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.nq{font-family:var(--f-nq)}
+h1,h2,h3{text-wrap:balance;margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
+
+/* progress bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-block:10px;display:flex;align-items:center;gap:12px}
+.track{flex:1;height:12px;border-radius:99px;background:var(--line);overflow:hidden}
+.fill{height:100%;width:0;background:var(--pencil);border-radius:99px;transition:width .4s}
+.count{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.reset{background:none;border:1px solid var(--line);border-radius:99px;padding:4px 12px;cursor:pointer;color:var(--soft);font-size:14px}
+
+header{display:flex;flex-direction:column;gap:14px;padding-top:6px}
+.title{font-family:var(--f-nq);font-size:clamp(28px,7vw,40px);font-weight:800;line-height:1.2}
+.title small{display:block;font-family:var(--f-ui);font-size:15px;font-weight:500;color:var(--soft);margin-top:4px}
+.note{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.note .from{font-size:13px;letter-spacing:.04em;color:var(--soft);font-weight:500}
+.note p{margin:0;font-size:17px}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;font-size:14px;color:var(--soft)}
+.how div{display:flex;gap:8px;align-items:flex-start}
+.how b{color:var(--ink)}
+
+.sheet{background:var(--sheet);border-radius:18px;border:1px solid var(--line);padding:20px clamp(14px,4vw,28px) 24px;display:flex;flex-direction:column;gap:26px}
+.sheet-h{display:flex;align-items:baseline;gap:10px;border-bottom:2px dashed var(--line);padding-bottom:12px}
+.sheet-h h2{font-family:var(--f-nq);font-size:24px;font-weight:800}
+.sheet-h .num{font-family:var(--f-ui);font-size:14px;background:var(--accent-bg);color:var(--accent);border-radius:99px;padding:2px 10px;font-weight:700}
+.task{display:flex;flex-direction:column;gap:14px}
+.ask{font-family:var(--f-nq);font-size:19px;font-weight:600;border:1.5px solid var(--ink);border-radius:6px;padding:8px 14px;align-self:flex-start}
+.hint{font-size:14px;color:var(--soft);margin:-6px 0 0}
+
+/* feedback line */
+.fb{min-height:1.6em;font-size:15px;font-weight:500;border-radius:10px;padding:0 10px;transition:background .2s}
+.fb.ok{background:var(--ok-bg);color:var(--ok)}
+.fb.retry{background:var(--retry-bg);color:var(--retry)}
+.fb.info{color:var(--soft)}
+.fb .heard{font-weight:400;opacity:.85}
+
+/* matching */
+.match{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:clamp(70px,26vw,220px);row-gap:10px;padding-block:6px;user-select:none;-webkit-user-select:none}
+.match svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.col{display:flex;flex-direction:column;gap:10px}
+.colA{align-items:flex-end}
+.colB{align-items:flex-start}
+.mi{display:flex;align-items:center;gap:10px;background:none;border:2px solid transparent;border-radius:14px;padding:4px 10px;cursor:pointer;touch-action:none;min-height:58px}
+.mi .lt{font-family:var(--f-nq);font-size:38px;font-weight:600;line-height:1;min-width:1.2em;text-align:center}
+.mi .dot{width:20px;height:20px;border-radius:6px;background:var(--soft);border:2px solid var(--sheet);box-shadow:0 0 0 1.5px var(--soft);flex:none}
+.mi.sel{border-color:var(--accent);background:var(--accent-bg)}
+.mi.sel .dot{background:var(--accent);box-shadow:0 0 0 1.5px var(--accent)}
+.mi.done{cursor:default}
+.mi.done .dot{background:var(--ok);box-shadow:0 0 0 1.5px var(--ok)}
+.mi.bad{animation:shake .4s}
+.ln{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.ln.temp{stroke:var(--accent);stroke-dasharray:6 7}
+.ln.good{stroke:var(--ok)}
+.ln.wrong{stroke:var(--retry)}
+.ln.example{stroke:var(--soft)}
+.ex-tag{font-size:12px;color:var(--soft);font-family:var(--f-ui)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* reading cards */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;grid-template-areas:"txt act" "fb fb";gap:8px 12px;align-items:center}
+.card.done{border-color:var(--ok)}
+.card .txt{grid-area:txt;font-family:var(--f-nq);font-size:clamp(28px,7vw,36px);font-weight:600;line-height:1.5;display:flex;flex-wrap:wrap;align-items:center;gap:.3em;min-width:0}
+.card .act{grid-area:act;display:flex;gap:8px;align-items:center}
+.card .fb{grid-area:fb}
+.pic{display:inline-flex;flex-direction:column;align-items:center;font-size:40px;line-height:1.1}
+.pic small{font-family:var(--f-ui);font-size:12px;color:var(--soft);font-weight:500}
+.mic{display:inline-flex;align-items:center;gap:6px;border:none;background:var(--accent);color:#fff;border-radius:99px;padding:10px 16px;font-weight:500;cursor:pointer;font-size:15px;white-space:nowrap}
+:root[data-theme="dark"] .mic{color:#11172A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .mic{color:#11172A}}
+.mic.on{background:var(--retry);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px var(--retry-bg)}}
+.check{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:none;cursor:pointer;font-size:20px;color:var(--soft);display:grid;place-items:center}
+.check.on{background:var(--ok);border-color:var(--ok);color:#fff}
+
+/* balloons */
+.balloons{display:flex;flex-wrap:wrap;justify-content:center;gap:18px 22px;padding-block:6px 20px}
+.bl{position:relative;width:132px;height:132px;border-radius:50%;border:2.5px solid var(--ink);background:var(--sheet);cursor:pointer;display:grid;grid-template-columns:1fr 1fr;place-items:center;padding:18px;transition:background .25s}
+.bl::after{content:"";position:absolute;top:100%;left:50%;width:2px;height:18px;background:var(--ink)}
+.bl span{font-family:var(--f-nq);font-size:30px;font-weight:600;line-height:1;color:var(--ink)}
+.bl.c1{background:var(--b1)} .bl.c2{background:var(--b2)} .bl.c3{background:var(--b3)} .bl.c4{background:var(--b4)} .bl.c5{background:var(--b5)}
+.bl[class*=" c"] span{color:#1C2A4A}
+
+/* hollow words */
+.words{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.word{border:1.5px solid var(--line);border-radius:16px;padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.word.done{border-color:var(--ok)}
+.hollow{background:none;border:none;cursor:pointer;font-family:var(--f-nq);font-size:clamp(36px,10vw,46px);font-weight:800;line-height:1.35;color:transparent;-webkit-text-stroke:1.6px var(--ink);padding:0 6px;transition:color .3s}
+.word.done .hollow{color:var(--wc,var(--b2));-webkit-text-stroke:1.6px var(--ink)}
+.word .mic{padding:7px 12px;font-size:14px}
+.word .fb{font-size:13px;text-align:center;padding:2px 6px}
+
+/* smiley */
+.smile{width:50px;height:50px;border:none;background:none;padding:0;cursor:pointer;flex:none}
+.smile circle.face{fill:transparent;stroke:var(--ink);stroke-width:2.5;transition:fill .3s}
+.smile.on circle.face{fill:var(--pencil)}
+.smile .feat{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round}
+
+.party{display:none;background:var(--ok-bg);color:var(--ok);border-radius:16px;padding:18px;text-align:center;font-size:20px;font-weight:700}
+.party.show{display:block}
+footer{text-align:center;color:var(--soft);font-size:13px;display:flex;flex-direction:column;gap:4px}
+.engine{font-size:13px;color:var(--soft)}
+.burst{position:fixed;pointer-events:none;font-size:28px;z-index:20;animation:fly .9s ease-out forwards}
+@keyframes fly{to{transform:translateY(-70px) scale(1.4);opacity:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:440px){
+  .card{grid-template-columns:1fr;grid-template-areas:"txt" "act" "fb"}
+  .mi .lt{font-size:34px}
+  .bl{width:118px;height:118px}
+}
+</style>
+
+<div class="wrap">
+  <div class="bar" role="group" aria-label="התקדמות">
+    <div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
+    <div class="count" id="count">0 / 0 ⭐</div>
+    <button class="reset" id="reset" type="button">להתחיל מחדש</button>
+  </div>
+
+  <header>
+    <h1 class="title">דַּף קְרִיאָה לְשַׁבָּת<small>דפים 4, 5, 6 · כיתה א׳</small></h1>
+    <div class="note">
+      <div class="from">הודעה מהמורה</div>
+      <p>הורים יקרים, מצורפים שלושה דפי קריאה לתרגול למהלך השבוע הקרוב. מוזמנים לעבוד עם הילדים, לקרוא מספר פעמים במשך מספר ימים (כן, גם אם כבר יודעים בעל פה, החשיפה למילים ולצלילים חשובה).</p>
+      <p>לתרגול כתיבה: לתת לילדים לכתוב באותיות כתב את המילים ו/או המשפטים. שיהיה סופ״ש מהנה!</p>
+    </div>
+    <div class="how">
+      <div>✏️ <span><b>למתוח קו:</b> גוררים מצליל לצליל, או נוגעים בצליל ואז בבן הזוג שלו.</span></div>
+      <div>🎤 <span><b>לקרוא בקול:</b> לוחצים על המיקרופון, הילד קורא, והדף בודק.</span></div>
+      <div>✓ <span><b>לסמן:</b> בלון, מילה או סמיילי שהצלחתם לקרוא, בנגיעה.</span></div>
+    </div>
+    <div class="engine" id="engine"></div>
+  </header>
+
+  <!-- ===== דף 4 ===== -->
+  <section class="sheet" aria-labelledby="s4">
+    <div class="sheet-h"><h2 id="s4">דַּף קְרִיאָה לְשַׁבָּת</h2><span class="num">מס׳ 4</span></div>
+
+    <div class="task">
+      <div class="ask nq">מִי הָאָח הַתְּאוֹם שֶׁל כָּל צְלִיל? מִי מַשְׁמִיעַ אוֹתוֹ צְלִיל?</div>
+      <p class="hint">מתחו קו בין שני צלילים שנשמעים אותו דבר.</p>
+      <div class="match" id="m4"></div>
+      <div class="fb" id="m4fb" aria-live="polite"></div>
+    </div>
+
+    <div class="task">
+      <div class="ask nq">קִרְאוּ בְּקוֹל</div>
+      <p class="hint">התמונה היא חלק מהמשפט. למשל: ״הַ 🥤 מַר״ נקרא ״הַמִּיץ מַר״.</p>
+      <div class="cards" id="r4"></div>
+    </div>
+  </section>
+
+  <!-- ===== דף 5 ===== -->
+  <section class="sheet" aria-labelledby="s5">
+    <div class="sheet-h"><h2 id="s5">דַּף קְרִיאָה לְשַׁבָּת</h2><span class="num">מס׳ 5</span></div>
+    <div class="task">
+      <div class="ask nq">צִבְעוּ בָּלוֹן וּמִילָה שֶׁהִצְלַחְתֶּם לִקְרוֹא.</div>
+      <p class="hint">נגיעה בבלון צובעת אותו. נגיעה נוספת מחליפה צבע.</p>
+      <div class="balloons" id="balloons"></div>
+      <p class="hint">נגיעה במילה צובעת אותה, או קראו אותה בקול והיא תיצבע לבד.</p>
+      <div class="words" id="words"></div>
+    </div>
+  </section>
+
+  <!-- ===== דף 6 ===== -->
+  <section class="sheet" aria-labelledby="s6">
+    <div class="sheet-h"><h2 id="s6">דַּף קְרִיאָה לְשַׁבָּת</h2><span class="num">מס׳ 6</span></div>
+    <div class="task">
+      <div class="ask nq">קִרְאוּ וּמִתְחוּ קַו מֵהַצְּלִיל לַצְּלִיל הַדּוֹמֶה לוֹ.</div>
+      <p class="hint">הקו האפור הוא דוגמה.</p>
+      <div class="match" id="m6"></div>
+      <div class="fb" id="m6fb" aria-live="polite"></div>
+    </div>
+    <div class="task">
+      <div class="ask nq">אִם קְרָאתֶם אֶת הַמִּשְׁפָּטִים, צִבְעוּ בְּצָהֹב אֶת הַחִיּוּךְ.</div>
+      <p class="hint">קראו בקול, או געו בסמיילי כדי לצבוע אותו.</p>
+      <div class="cards" id="r6"></div>
+    </div>
+  </section>
+
+  <div class="party" id="party" aria-live="polite">כָּל הַכָּבוֹד! סִיַּמְתֶּם אֶת כָּל דַּפֵּי הַקְּרִיאָה 🎉</div>
+
+  <footer>
+    <div>© כל הזכויות שמורות לטלי שנידמן</div>
+    <div>הדפים הומרו לגרסה אינטראקטיבית לתרגול בבית.</div>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- progress ---------- */
+const units=new Map(); // id -> done
+function unit(id){units.set(id,false)}
+function done(id,el){
+  if(units.get(id)) return;
+  units.set(id,true); renderProgress();
+  if(el) burst(el);
+}
+function undone(id){ if(units.get(id)){units.set(id,false);renderProgress()} }
+function renderProgress(){
+  const t=units.size, d=[...units.values()].filter(Boolean).length;
+  $("fill").style.width=(t?d/t*100:0)+"%";
+  $("count").textContent=d+" / "+t+" ⭐";
+  $("party").classList.toggle("show",t>0&&d===t);
+}
+function burst(el){
+  try{
+    const r=el.getBoundingClientRect(), s=document.createElement("div");
+    s.className="burst"; s.textContent=["⭐","🌟","✨"][Math.floor(Math.random()*3)];
+    s.style.left=(r.left+r.width/2-14)+"px"; s.style.top=(r.top-6)+"px";
+    document.body.appendChild(s); setTimeout(()=>s.remove(),950);
+  }catch(e){}
+}
+function say(fbEl,kind,msg,heard){
+  fbEl.className="fb "+kind;
+  fbEl.innerHTML=esc(msg)+(heard?' <span class="heard">(שמעתי: ״'+esc(heard)+'״)</span>':"");
+}
+const PRAISE=["כל הכבוד! 🌟","מצוין! קריאה נהדרת 👏","וואו, איזה יופי! ⭐","קראת נכון! 💪"];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ---------- line matching ---------- */
+function setupMatch(root,fb,colA,colB,example){
+  root.innerHTML='<svg aria-hidden="true"></svg><div class="col colA"></div><div class="col colB"></div>';
+  const svg=root.querySelector("svg");
+  const mk=(it,col,i)=>{
+    const b=document.createElement("button"); b.type="button"; b.className="mi";
+    b.dataset.col=col; b.dataset.snd=it.s; b.dataset.key=col+i;
+    b.setAttribute("aria-label","צליל "+it.t);
+    b.innerHTML='<span class="lt">'+esc(it.t)+'</span><span class="dot"></span>';
+    if(col==="B") b.insertBefore(b.lastChild,b.firstChild); // dot faces the middle
+    return b;
+  };
+  colA.forEach((it,i)=>root.children[1].appendChild(mk(it,"A",i)));
+  colB.forEach((it,i)=>root.children[2].appendChild(mk(it,"B",i)));
+  const items=[...root.querySelectorAll(".mi")];
+  const lines=[]; let sel=null, temp=null, drag=false;
+  const center=el=>{const d=el.querySelector(".dot").getBoundingClientRect(),r=root.getBoundingClientRect();return{x:d.left+d.width/2-r.left,y:d.top+d.height/2-r.top}};
+  const mkLine=cls=>{const l=document.createElementNS(NS,"line");l.setAttribute("class","ln "+cls);svg.appendChild(l);return l};
+  const place=(l,p,q)=>{l.setAttribute("x1",p.x);l.setAttribute("y1",p.y);l.setAttribute("x2",q.x);l.setAttribute("y2",q.y)};
+  const redraw=()=>{svg.setAttribute("width",root.clientWidth);svg.setAttribute("height",root.clientHeight);lines.forEach(o=>place(o.el,center(o.a),center(o.b)))};
+  try{new ResizeObserver(redraw).observe(root)}catch(e){window.addEventListener("resize",redraw)}
+  const setSel=b=>{items.forEach(x=>x.classList.toggle("sel",x===b));sel=b};
+
+  if(example){
+    const a=items.find(x=>x.dataset.key===example[0]), b=items.find(x=>x.dataset.key===example[1]);
+    a.classList.add("done");b.classList.add("done");
+    lines.push({a,b,el:mkLine("example")});
+    const tag=document.createElement("span");tag.className="ex-tag";tag.textContent="דוגמה";a.appendChild(tag);
+  }
+  items.forEach(b=>{ if(!b.classList.contains("done")&&b.dataset.col==="A") unit(root.id+":"+b.dataset.snd) });
+
+  function attempt(a,b){
+    if(a.dataset.snd===b.dataset.snd){
+      a.classList.add("done");b.classList.add("done");a.classList.remove("sel");b.classList.remove("sel");
+      const o={a,b,el:mkLine("good")};lines.push(o);place(o.el,center(a),center(b));
+      say(fb,"ok",pick(["יופי! אלה תאומים 👯","נכון! אותו צליל בדיוק 🎵","מצוין! ⭐"]));
+      done(root.id+":"+a.dataset.snd,b);
+      if(items.every(x=>x.classList.contains("done"))) say(fb,"ok","כל הכבוד! מצאתם את כל הזוגות 🎉");
+    }else{
+      const l=mkLine("wrong");place(l,center(a),center(b));
+      [a,b].forEach(x=>{x.classList.remove("bad");void x.offsetWidth;x.classList.add("bad")});
+      say(fb,"retry","לא בדיוק. קראו את שני הצלילים בקול ונסו שוב 🙂");
+      setTimeout(()=>l.remove(),900);
+    }
+  }
+  function choose(it){
+    if(!it||it.classList.contains("done")) return false;
+    if(sel&&sel!==it&&sel.dataset.col!==it.dataset.col){attempt(sel,it);setSel(null);return false}
+    setSel(it); return true;
+  }
+  root.addEventListener("pointerdown",e=>{
+    const it=e.target.closest(".mi"); if(!it) return;
+    e.preventDefault();
+    if(!choose(it)) return;
+    drag=true; temp=mkLine("temp"); const c=center(it); place(temp,c,c);
+    try{root.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  root.addEventListener("pointermove",e=>{
+    if(!drag||!temp||!sel) return;
+    const r=root.getBoundingClientRect(); place(temp,center(sel),{x:e.clientX-r.left,y:e.clientY-r.top});
+  });
+  const end=e=>{
+    if(!drag) return; drag=false; if(temp){temp.remove();temp=null}
+    if(e.type==="pointercancel") return;
+    const hit=document.elementFromPoint(e.clientX,e.clientY);
+    const t=hit&&hit.closest?hit.closest(".mi"):null;
+    if(t&&root.contains(t)&&sel&&t!==sel&&!t.classList.contains("done")&&t.dataset.col!==sel.dataset.col){attempt(sel,t);setSel(null)}
+  };
+  root.addEventListener("pointerup",end);
+  root.addEventListener("pointercancel",end);
+  root.addEventListener("click",e=>{ if(e.detail===0){const it=e.target.closest(".mi"); choose(it)} }); // keyboard
+  requestAnimationFrame(redraw);
+}
+
+/* ---------- speech checking ---------- */
+const NIQ=/[֑-ׇ]/g;
+const FIN={"ך":"כ","ם":"מ","ן":"נ","ף":"פ","ץ":"צ"};
+function norm(s){return String(s||"").replace(NIQ,"").replace(/[ךםןףץ]/g,c=>FIN[c]).replace(/[^א-ת\s]/g," ").replace(/\s+/g," ").trim()}
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=[...Array(n+1).keys()];for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+const sim=(a,b)=>1-lev(a,b)/Math.max(a.length,b.length,1);
+function grade(targets,heard){
+  const h=norm(heard); if(!h) return "empty";
+  const hs=h.replace(/ /g,""), htok=h.split(" ");
+  let best="miss";
+  for(const tRaw of targets){
+    const t=norm(tRaw), ts=t.replace(/ /g,""), tt=t.split(" ");
+    if(hs.includes(ts)) return "ok";
+    if(tt.length===1){
+      if(htok.some(w=>w===ts)) return "ok";
+      if(ts.length>=4&&htok.some(w=>sim(w,ts)>=0.75)) return "ok";
+      if(htok.some(w=>sim(w,ts)>=0.5)) best="close";
+    }else{
+      const hit=tt.filter(w=>htok.some(x=>x===w||(w.length>=3&&sim(x,w)>=0.67))).length;
+      if(hit===tt.length||sim(hs,ts)>=0.85) return "ok";
+      if(hit/tt.length>=0.5||sim(hs,ts)>=0.55) best="close";
+    }
+  }
+  return best;
+}
+const NativeSR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let dict=null, nativeBlocked=false, dictLang="he";
+const engineEl=$("engine");
+try{
+  if(window.claude&&typeof window.claude.use==="function"){
+    window.claude.use("dictation").then(d=>{ if(d){dict=d;wireDict()} }).catch(()=>{});
+  }
+}catch(e){}
+if(!NativeSR) engineEl.textContent="";
+
+let cur=null; // {btn,fb,targets,onOk,heard,partial,finished,timer}
+function setBtn(btn,on){btn.classList.toggle("on",on);btn.innerHTML=on?"⏹ סיימתי":"🎤 קראו בקול";btn.setAttribute("aria-pressed",on?"true":"false")}
+function finish(session,texts){
+  if(!session||session.finished) return; session.finished=true;
+  clearTimeout(session.timer); setBtn(session.btn,false);
+  if(cur===session) cur=null;
+  let g="empty",heard="";
+  for(const t of texts){ const r=grade(session.targets,t); if(r==="ok"){g="ok";heard=t;break} if(r==="close"&&g!=="close"){g="close";heard=t} else if(r==="miss"&&g==="empty"){g="miss";heard=t} }
+  if(g==="ok"){ say(session.fb,"ok",pick(PRAISE)); session.onOk(); }
+  else if(g==="close") say(session.fb,"retry","כמעט! נסו לקרוא שוב, לאט ובקול ברור.",heard);
+  else if(g==="miss") say(session.fb,"retry","זה לא נשמע כמו הכתוב. קראו שוב לאט, מילה אחרי מילה 🙂",heard);
+  else say(session.fb,"retry","לא שמעתי. נסו שוב, קרוב יותר למיקרופון.");
+}
+function noEngine(session,msg){
+  setBtn(session.btn,false); session.finished=true; if(cur===session) cur=null;
+  say(session.fb,"info",msg||"בדפדפן הזה אין בדיקת קריאה. אפשר לסמן ✓ ידנית אחרי שהילד קרא.");
+}
+function wireDict(){
+  dict.onPartial(({text})=>{ if(!cur) return; cur.partial=text;
+    if(grade(cur.targets,cur.heard+" "+text)==="ok"){ const s=cur; dict.stop().catch(()=>{}); finish(s,[s.heard+" "+text]); }
+    else if(text) say(cur.fb,"info","מקשיב… "+text);
+  });
+  dict.onFinal(({text})=>{ if(!cur) return; cur.heard=(cur.heard+text).trim(); cur.partial="";
+    if(grade(cur.targets,cur.heard)==="ok"){ const s=cur; dict.stop().catch(()=>{}); finish(s,[s.heard]); }
+  });
+  dict.onState(({state,reason})=>{
+    if(state==="idle"&&cur){ const s=cur;
+      if(reason==="not_granted"){noEngine(s,"אין הרשאה למיקרופון. אפשר לסמן ✓ ידנית.");return}
+      if(reason==="unavailable"){ if(dictLang){dictLang=null;noEngine(s,"נסו ללחוץ שוב על המיקרופון.")} else {dict=null;noEngine(s)} return }
+      finish(s,[s.heard+" "+(s.partial||"")]);
+    }
+  });
+}
+function listen(btn,fb,targets,onOk){
+  if(cur&&cur.btn===btn){ // stop pressed
+    const s=cur;
+    if(s.engine==="dict") dict.stop().then(()=>finish(s,[s.heard+" "+(s.partial||"")])).catch(()=>finish(s,[s.heard]));
+    else if(s.rec) try{s.rec.stop()}catch(e){finish(s,s.all)}
+    return;
+  }
+  if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.rec) try{old.rec.abort()}catch(e){} old.finished=true; setBtn(old.btn,false); cur=null; }
+  const s={btn,fb,targets,onOk,heard:"",partial:"",all:[],finished:false};
+  cur=s; setBtn(btn,true); say(fb,"info","מקשיב… קראו עכשיו");
+  s.timer=setTimeout(()=>{ if(cur===s){ if(s.engine==="dict") dict.stop().catch(()=>{}); else if(s.rec) try{s.rec.stop()}catch(e){} } },15000);
+  if(dict){
+    s.engine="dict";
+    const opts=dictLang?{language:dictLang}:undefined;
+    dict.start(opts).catch(err=>{
+      const code=err&&err.code;
+      if(code==="unavailable"&&dictLang){dictLang=null;noEngine(s,"נסו ללחוץ שוב על המיקרופון.");return}
+      if(code==="stopped") return;
+      if(code==="not_granted"){noEngine(s,"אין הרשאה למיקרופון. אפשר לסמן ✓ ידנית.");return}
+      if(code==="dismissed"){noEngine(s,"לחצו שוב ואשרו גישה למיקרופון.");return}
+      if(code==="rate_limited"){noEngine(s,"המיקרופון עסוק. נסו שוב בעוד רגע.");return}
+      if(code==="unavailable"){dict=null}
+      if(NativeSR&&!nativeBlocked){ s.finished=false; startNative(s) } else noEngine(s);
+    });
+    return;
+  }
+  if(NativeSR&&!nativeBlocked){ startNative(s); return }
+  noEngine(s);
+}
+function startNative(s){
+  s.engine="native";
+  let rec; try{ rec=new NativeSR() }catch(e){ nativeBlocked=true; noEngine(s); return }
+  s.rec=rec; rec.lang="he-IL"; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=false;
+  rec.onresult=ev=>{
+    const texts=[]; let joined="";
+    for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; joined+=" "+r[0].transcript; for(let k=0;k<r.length;k++) texts.push(r[k].transcript) }
+    texts.unshift(joined); s.all=texts;
+    if(texts.some(t=>grade(s.targets,t)==="ok")){ try{rec.stop()}catch(e){} finish(s,texts) }
+    else say(s.fb,"info","מקשיב… "+joined.trim());
+  };
+  rec.onerror=ev=>{
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){ nativeBlocked=true; noEngine(s,"אין גישה למיקרופון כאן. אפשר לסמן ✓ ידנית, או לפתוח את הדף בכרום."); }
+    else if(ev.error==="no-speech") finish(s,[]);
+    else if(ev.error!=="aborted") finish(s,s.all);
+  };
+  rec.onend=()=>finish(s,s.all);
+  try{ rec.start() }catch(e){ noEngine(s) }
+}
+function micButton(fb,targets,onOk){
+  const b=document.createElement("button"); b.type="button"; b.className="mic"; setBtn(b,false);
+  b.addEventListener("click",()=>listen(b,fb,targets,onOk));
+  return b;
+}
+
+/* ---------- reading cards (sheets 4 and 6) ---------- */
+function readingCard(container,item,markKind){
+  const id="read:"+item.say; unit(id);
+  const card=document.createElement("div"); card.className="card";
+  card.innerHTML='<div class="txt">'+item.html+'</div><div class="act"></div><div class="fb" aria-live="polite"></div>';
+  const act=card.querySelector(".act"), fb=card.querySelector(".fb");
+  let mark;
+  if(markKind==="smile"){
+    mark=document.createElement("button"); mark.type="button"; mark.className="smile"; mark.setAttribute("aria-label","צבעו את החיוך");
+    mark.innerHTML='<svg viewBox="0 0 50 50" width="50" height="50"><circle class="face" cx="25" cy="25" r="22"/><circle class="feat" cx="18" cy="20" r="2.4"/><circle class="feat" cx="32" cy="20" r="2.4"/><path class="feat" d="M15 30 Q25 39 35 30"/></svg>';
+  }else{
+    mark=document.createElement("button"); mark.type="button"; mark.className="check"; mark.textContent="✓"; mark.setAttribute("aria-label","סמנו שקראנו");
+  }
+  const setOn=on=>{ mark.classList.toggle("on",on); card.classList.toggle("done",on); mark.setAttribute("aria-pressed",on?"true":"false"); on?done(id,mark):undone(id) };
+  mark.addEventListener("click",()=>setOn(!mark.classList.contains("on")));
+  act.appendChild(micButton(fb,[item.say].concat(item.alts||[]),()=>setOn(true)));
+  act.appendChild(mark);
+  container.appendChild(card);
+}
+const rebus=(pre,emoji,label,post)=>'<span>'+pre+'</span><span class="pic" aria-label="'+label+'">'+emoji+'<small>'+label+'</small></span><span>'+post+'</span>';
+
+const R4=[
+  {html:'<span class="pic">👧</span><span>רָמָה</span>',say:"רמה"},
+  {html:'<span class="pic">🧒</span><span>רָם</span>',say:"רם",alts:["ראם"]},
+  {html:rebus("הַ","🥤","המיץ","מַר."),say:"המיץ מר"},
+  {html:rebus("הַ","💊","התרופה","מָרָה."),say:"התרופה מרה"},
+  {html:'<span>בָּר בָּהָר.</span><span class="pic">⛰️</span>',say:"בר בהר",alts:["באר בהר","בר בהר"]},
+  {html:rebus("הַ","🧑‍🤝‍🧑","מקהלה","בַּבָּמָה."),say:"המקהלה בבמה",alts:["המקהלה בבימה"]}
+];
+R4.forEach(it=>readingCard($("r4"),it,"check"));
+
+const R6=[
+  {html:'<span>בָּר בָּנָה בָּמָה.</span>',say:"בר בנה במה",alts:["באר בנה במה","בר בנה בימה"]},
+  {html:'<span>רָמָה שָׁרָה בַּנָּהָר.</span>',say:"רמה שרה בנהר"},
+  {html:'<span>רָן שָׁמַר בָּנָנָה מָרָה.</span>',say:"רן שמר בננה מרה"}
+];
+R6.forEach(it=>readingCard($("r6"),it,"smile"));
+
+/* ---------- matching data ---------- */
+setupMatch($("m4"),$("m4fb"),
+  [{t:"רָ",s:"ra"},{t:"ר",s:"r"},{t:"מָ",s:"ma"},{t:"בְּ",s:"b"},{t:"מְ",s:"m"},{t:"בָּ",s:"ba"},{t:"הַ",s:"ha"}],
+  [{t:"מַ",s:"ma"},{t:"הָ",s:"ha"},{t:"רְ",s:"r"},{t:"בַּ",s:"ba"},{t:"ם",s:"m"},{t:"רַ",s:"ra"},{t:"בּ",s:"b"}]
+);
+setupMatch($("m6"),$("m6fb"),
+  [{t:"בָּ",s:"ba"},{t:"שַׁ",s:"sha"},{t:"מְ",s:"m"},{t:"ן",s:"n"},{t:"רַ",s:"ra"},{t:"הֲ",s:"ha"}],
+  [{t:"ם",s:"m"},{t:"נְ",s:"n"},{t:"רָ",s:"ra"},{t:"הָ",s:"ha"},{t:"בַּ",s:"ba"},{t:"שָׁ",s:"sha"}],
+  ["A4","B2"]
+);
+
+/* ---------- balloons (sheet 5) ---------- */
+const BAL=[["נַ","נָ","ן","נְ"],["רַ","רָ","ר","רְ"],["מַ","מָ","מ","מְ"],["בּ","בְּ","בַּ","בָּ"],["הַ","הָ","ה","הֲ"]];
+BAL.forEach((ls,i)=>{
+  const id="balloon:"+i; unit(id);
+  const b=document.createElement("button"); b.type="button"; b.className="bl";
+  b.setAttribute("aria-label","בלון "+ls.join(" "));
+  b.innerHTML=ls.map(l=>'<span>'+esc(l)+'</span>').join("");
+  let c=0;
+  b.addEventListener("click",()=>{ b.classList.remove("c"+c); c=c%5+1; b.classList.add("c"+c); done(id,b) });
+  $("balloons").appendChild(b);
+});
+
+/* ---------- hollow words (sheet 5) ---------- */
+const WCOL=["var(--b1)","var(--b2)","var(--b3)","var(--b4)","var(--b5)"];
+const W5=[{t:"בָּר",say:"בר",alts:["באר"]},{t:"רָן",say:"רן"},{t:"רָם",say:"רם",alts:["ראם"]},{t:"בָּנָה",say:"בנה"},{t:"מָנָה",say:"מנה"},{t:"נָהָר",say:"נהר"},{t:"בָּמְבָּה",say:"במבה"}];
+W5.forEach((w,i)=>{
+  const id="word:"+w.say; unit(id);
+  const box=document.createElement("div"); box.className="word"; box.style.setProperty("--wc",WCOL[i%5]);
+  const h=document.createElement("button"); h.type="button"; h.className="hollow"; h.textContent=w.t; h.setAttribute("aria-label","צבעו את המילה "+w.t);
+  const fb=document.createElement("div"); fb.className="fb"; fb.setAttribute("aria-live","polite");
+  const setOn=on=>{ box.classList.toggle("done",on); h.setAttribute("aria-pressed",on?"true":"false"); on?done(id,h):undone(id) };
+  h.addEventListener("click",()=>setOn(!box.classList.contains("done")));
+  box.append(h,micButton(fb,[w.say].concat(w.alts||[]),()=>setOn(true)),fb);
+  $("words").appendChild(box);
+});
+
+$("reset").addEventListener("click",()=>{ location.reload() });
+renderProgress();
+})();
+</script>
+
+</body>
+</html>
