@@ -407,13 +407,14 @@ function listen(btn,fb,targets,onOk){
   if(cur&&cur.btn===btn){ // stop pressed
     const s=cur;
     if(s.engine==="dict") dict.stop().then(()=>finish(s,[s.heard+" "+(s.partial||"")])).catch(()=>finish(s,[s.heard]));
+    else if(s.ios){ s.stopReq=true; finish(s,s.all) }
     else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){finish(s,s.all)} if(!s.alive) finish(s,s.all) }
     return;
   }
-  if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.rec){ old.stopReq=true; try{old.rec.abort()}catch(e){} } old.finished=true; setBtn(old.btn,false); cur=null; }
+  if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.ios){ old.stopReq=true } else if(old.rec){ old.stopReq=true; try{old.rec.abort()}catch(e){} } old.finished=true; setBtn(old.btn,false); cur=null; }
   const s={btn,fb,targets,onOk,heard:"",partial:"",all:[],finished:false};
   cur=s; setBtn(btn,true); say(fb,"info","מקשיב… קראו עכשיו");
-  s.timer=setTimeout(()=>{ if(cur===s){ if(s.engine==="dict") dict.stop().catch(()=>{}); else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){} } } },15000);
+  s.timer=setTimeout(()=>{ if(cur===s){ if(s.engine==="dict") dict.stop().catch(()=>{}); else if(s.ios){ s.stopReq=true; finish(s,s.all) } else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){} } } },15000);
   if(dict){
     s.engine="dict";
     const opts=dictLang?{language:dictLang}:undefined;
@@ -429,14 +430,14 @@ function listen(btn,fb,targets,onOk){
     });
     return;
   }
-  if(NativeSR&&!nativeBlocked){ startNative(s); return }
+  if(NativeSR&&!nativeBlocked){ if(IS_IOS) startIOS(s); else startNative(s); return }
   noEngine(s,"בדפדפן הזה אין בדיקת קריאה. "+openHint()+" או סמנו ✓ ידנית.");
 }
 const IN_APP=/WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
 const IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function openHint(){ return IS_IOS?"פתחו את הקישור בספארי (⋯ ← פתיחה בספארי).":"פתחו את הקישור בכרום (⋮ ← פתיחה בכרום)."; }
 // Version + optional diagnostics: open the page with ?debug to see what the phone's speech engine does.
-const PAGE_VER="3";
+const PAGE_VER="4";
 const DEBUG=/[?&]debug/.test(location.search);
 let dbgEl=null;
 function dbg(m){ if(!DEBUG) return; if(!dbgEl){ dbgEl=document.createElement("pre"); dbgEl.dir="ltr"; dbgEl.style.cssText="font:11px/1.4 monospace;white-space:pre-wrap;background:#fff8;border:1px solid #ccc;padding:8px;margin:12px;max-height:40vh;overflow:auto;text-align:left"; document.body.appendChild(dbgEl); dbgEl.textContent="v"+PAGE_VER+" | "+navigator.userAgent+"\n"; } const t=new Date(); dbgEl.textContent+=t.toTimeString().slice(0,8)+"."+String(t.getMilliseconds()).padStart(3,"0")+" "+m+"\n"; dbgEl.scrollTop=1e9; }
@@ -499,6 +500,69 @@ function startNative(s){
     noEngine(s,"המיקרופון לא נפתח. לחצו שוב על 🎤 (ואם זה חוזר, רעננו את הדף).");
   },3500);
 }
+// ---------- iPhone: one always-on listening session ----------
+// On iPhone (Safari and Chrome both use Apple's engine) a speech session that is
+// started a second time gets no sound from the microphone. So on iPhone we start
+// ONE continuous session on the first tap and keep it running while the page is
+// open. Each card only looks at what was said after its own 🎤 tap.
+let IOS=null; // {rec, finals, ended}
+function iosTexts(ev,from){
+  const texts=[]; let joined="";
+  for(let i=from;i<ev.results.length;i++){ const r=ev.results[i]; joined+=" "+r[0].transcript; for(let k=0;k<r.length;k++) texts.push(r[k].transcript) }
+  texts.unshift(joined); return {texts,joined:joined.trim()};
+}
+function iosOpen(){
+  const rec=new NativeSR(); rec.lang="he-IL"; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=true;
+  const sess={rec,count:0,full:"",ended:false,started:false}; IOS=sess;
+  const alive=ev=>{ dbg("ios "+ev.type); sess.started=true; if(cur&&cur.ios){ cur.alive=true; clearTimeout(cur.watch) } };
+  rec.onstart=alive; rec.onaudiostart=alive;
+  rec.onresult=ev=>{
+    sess.count=ev.results.length;
+    const full=iosTexts(ev,0).joined; sess.full=full;
+    const s=cur; if(!s||!s.ios||s.finished) return;
+    // iPhone often keeps growing one long result, so take the words added since this tap.
+    const suffix=(s.prefix&&full.startsWith(s.prefix))?full.slice(s.prefix.length).trim():"";
+    const byIndex=iosTexts(ev,Math.min(s.from,ev.results.length));
+    const texts=(suffix?[suffix]:[]).concat(s.from<ev.results.length?byIndex.texts:[]);
+    const joined=suffix||byIndex.joined; dbg("ios result: ["+joined+"] full=["+full+"]");
+    if(!joined) return; s.alive=true; clearTimeout(s.watch); s.all=texts;
+    if(texts.some(t=>grade(s.targets,t)==="ok")){ s.stopReq=true; finish(s,texts) }
+    else say(s.fb,"info","מקשיב… "+joined);
+  };
+  rec.onerror=ev=>{
+    dbg("ios error: "+ev.error); const s=cur;
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){ nativeBlocked=true;
+      if(s&&s.ios) noEngine(s, IN_APP?"כאן אין גישה למיקרופון. "+openHint()
+        :"אין גישה למיקרופון. באייפון צריך להפעיל את Siri והכתבה (הגדרות ← כללי ← מקלדת ← הפעלת הכתבה) ולאשר מיקרופון. אפשר גם לסמן ✓ ידנית."); }
+    else if(ev.error==="network"&&s&&s.ios) noEngine(s,"בדיקת הקריאה צריכה חיבור לאינטרנט. נסו שוב.");
+  };
+  rec.onend=()=>{
+    dbg("ios end"); sess.ended=true; if(IOS===sess) IOS=null;
+    const s=cur; if(s&&s.ios&&!s.finished){ clearTimeout(s.watch); finish(s,s.all) }
+  };
+  rec.start(); dbg("ios start ok");
+  return sess;
+}
+function startIOS(s){
+  s.engine="native"; s.ios=true; s.all=[]; s.alive=false;
+  let sess=IOS;
+  if(!sess||sess.ended){
+    try{ sess=iosOpen() }
+    catch(e){ dbg("ios start threw: "+(e&&e.name)); IOS=null; noEngine(s,"לא הצלחתי להפעיל את המיקרופון. רעננו את הדף ונסו שוב."); return }
+  }
+  s.from=sess.count; s.prefix=sess.full; // ignore anything said before this tap
+  if(sess.started) s.alive=true;
+  clearTimeout(s.watch);
+  s.watch=setTimeout(()=>{
+    if(s.finished||s.alive||cur!==s) return;
+    dbg("ios watchdog: mic never started");
+    try{sess.rec.abort()}catch(e){} IOS=null;
+    noEngine(s,"המיקרופון לא נפתח. רעננו את הדף ונסו שוב, או סמנו ✓ ידנית.");
+  },4000);
+}
+// Release the microphone when the page is hidden (app switched, screen locked).
+document.addEventListener("visibilitychange",()=>{ if(document.hidden&&IOS){ dbg("page hidden: closing mic"); try{IOS.rec.abort()}catch(e){} IOS=null; } });
+
 function micButton(fb,targets,onOk){
   const b=document.createElement("button"); b.type="button"; b.className="mic"; setBtn(b,false);
   b.addEventListener("click",()=>listen(b,fb,targets,onOk));
