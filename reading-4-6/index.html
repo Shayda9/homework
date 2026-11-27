@@ -126,6 +126,8 @@ header{display:flex;flex-direction:column;gap:14px;padding-top:6px}
 .hollow{background:none;border:none;cursor:pointer;font-family:var(--f-nq);font-size:clamp(36px,10vw,46px);font-weight:800;line-height:1.35;color:transparent;-webkit-text-stroke:1.6px var(--ink);padding:0 6px;transition:color .3s}
 .word.done .hollow{color:var(--wc,var(--b2));-webkit-text-stroke:1.6px var(--ink)}
 .word .mic{padding:7px 12px;font-size:14px}
+.spk{border:none;background:transparent;font-size:24px;line-height:1;width:44px;height:44px;border-radius:50%;cursor:pointer}
+.spk.on{background:var(--accent);opacity:.85}
 .word .fb{font-size:13px;text-align:center;padding:2px 6px}
 
 /* smiley */
@@ -412,6 +414,7 @@ function listen(btn,fb,targets,onOk){
     return;
   }
   if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.ios){ old.stopReq=true } else if(old.rec){ old.stopReq=true; try{old.rec.abort()}catch(e){} } old.finished=true; setBtn(old.btn,false); cur=null; }
+  stopSpeaking();
   const s={btn,fb,targets,onOk,heard:"",partial:"",all:[],finished:false};
   cur=s; setBtn(btn,true); say(fb,"info","מקשיב… קראו עכשיו");
   s.timer=setTimeout(()=>{ if(cur===s){ if(s.engine==="dict") dict.stop().catch(()=>{}); else if(s.ios){ s.stopReq=true; finish(s,s.all) } else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){} } } },15000);
@@ -437,7 +440,7 @@ const IN_APP=/WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
 const IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function openHint(){ return IS_IOS?"פתחו את הקישור בספארי (⋯ ← פתיחה בספארי).":"פתחו את הקישור בכרום (⋮ ← פתיחה בכרום)."; }
 // Version + optional diagnostics: open the page with ?debug to see what the phone's speech engine does.
-const PAGE_VER="4";
+const PAGE_VER="5";
 const DEBUG=/[?&]debug/.test(location.search);
 let dbgEl=null;
 function dbg(m){ if(!DEBUG) return; if(!dbgEl){ dbgEl=document.createElement("pre"); dbgEl.dir="ltr"; dbgEl.style.cssText="font:11px/1.4 monospace;white-space:pre-wrap;background:#fff8;border:1px solid #ccc;padding:8px;margin:12px;max-height:40vh;overflow:auto;text-align:left"; document.body.appendChild(dbgEl); dbgEl.textContent="v"+PAGE_VER+" | "+navigator.userAgent+"\n"; } const t=new Date(); dbgEl.textContent+=t.toTimeString().slice(0,8)+"."+String(t.getMilliseconds()).padStart(3,"0")+" "+m+"\n"; dbgEl.scrollTop=1e9; }
@@ -500,6 +503,40 @@ function startNative(s){
     noEngine(s,"המיקרופון לא נפתח. לחצו שוב על 🎤 (ואם זה חוזר, רעננו את הדף).");
   },3500);
 }
+// ---------- "listen to the sentence" (🔊) ----------
+// Plays a pre-recorded file (audio/*.mp3) when it exists; otherwise the device's own Hebrew voice.
+let ttsAudio=null, ttsBtn=null;
+function stopListening(){
+  if(!cur) return; const s=cur;
+  if(s.engine==="dict"){ try{dict.stop()}catch(e){} } else if(!s.ios&&s.rec){ s.stopReq=true; try{s.rec.abort()}catch(e){} }
+  s.stopReq=true; s.finished=true; clearTimeout(s.timer); clearTimeout(s.watch); setBtn(s.btn,false); say(s.fb,"info",""); cur=null;
+}
+function stopSpeaking(){
+  if(ttsAudio){ try{ttsAudio.pause()}catch(e){} ttsAudio=null }
+  try{ window.speechSynthesis&&speechSynthesis.cancel() }catch(e){}
+  if(ttsBtn){ ttsBtn.classList.remove("on"); ttsBtn=null }
+}
+function speakWithDevice(text,done){
+  if(!window.speechSynthesis){ done(); return }
+  const u=new SpeechSynthesisUtterance(text); u.lang="he-IL"; u.rate=0.8;
+  const v=speechSynthesis.getVoices().find(v=>/^he|^iw/i.test(v.lang)); if(v) u.voice=v;
+  u.onend=done; u.onerror=done; speechSynthesis.speak(u);
+}
+function speakButton(item){
+  const b=document.createElement("button"); b.type="button"; b.className="spk"; b.textContent="🔊"; b.setAttribute("aria-label","הקשיבו למשפט");
+  b.addEventListener("click",()=>{
+    const again=(ttsBtn===b); stopListening(); stopSpeaking(); if(again) return;
+    ttsBtn=b; b.classList.add("on"); dbg("speak: "+item.tts);
+    const done=()=>{ if(ttsBtn===b){ b.classList.remove("on"); ttsBtn=null } ttsAudio=null };
+    let fellBack=false; const fallback=()=>{ if(fellBack||ttsBtn!==b) return; fellBack=true; ttsAudio=null; dbg("audio file failed, using device voice"); speakWithDevice(item.tts,done) };
+    if(item.audio){
+      const a=new Audio(item.audio); ttsAudio=a; a.onended=done; a.onerror=fallback;
+      const pr=a.play(); if(pr&&pr.catch) pr.catch(fallback);
+    } else speakWithDevice(item.tts,done);
+  });
+  return b;
+}
+
 // ---------- iPhone: one always-on listening session ----------
 // On iPhone (Safari and Chrome both use Apple's engine) a speech session that is
 // started a second time gets no sound from the microphone. So on iPhone we start
@@ -584,6 +621,7 @@ function readingCard(container,item,markKind){
   }
   const setOn=on=>{ mark.classList.toggle("on",on); card.classList.toggle("done",on); mark.setAttribute("aria-pressed",on?"true":"false"); on?done(id,mark):undone(id) };
   mark.addEventListener("click",()=>setOn(!mark.classList.contains("on")));
+  if(item.tts) act.appendChild(speakButton(item));
   act.appendChild(micButton(fb,[item.say].concat(item.alts||[]),()=>setOn(true)));
   act.appendChild(mark);
   container.appendChild(card);
@@ -591,19 +629,19 @@ function readingCard(container,item,markKind){
 const rebus=(pre,emoji,label,post)=>'<span>'+pre+'</span><span class="pic" aria-label="'+label+'">'+emoji+'<small>'+label+'</small></span><span>'+post+'</span>';
 
 const R4=[
-  {html:'<span class="pic">👧</span><span>רָמָה</span>',say:"רמה"},
-  {html:'<span class="pic">🧒</span><span>רָם</span>',say:"רם",alts:["ראם"]},
-  {html:rebus("הַ","🥤","המיץ","מַר."),say:"המיץ מר"},
-  {html:rebus("הַ","💊","התרופה","מָרָה."),say:"התרופה מרה"},
-  {html:'<span>בָּר בָּהָר.</span><span class="pic">⛰️</span>',say:"בר בהר",alts:["באר בהר","בר בהר"]},
-  {html:rebus("הַ","🧑‍🤝‍🧑","מקהלה","בַּבָּמָה."),say:"המקהלה בבמה",alts:["המקהלה בבימה"]}
+  {html:'<span class="pic">👧</span><span>רָמָה</span>',say:"רמה",tts:"רָמָה",audio:"audio/r4-1.mp3"},
+  {html:'<span class="pic">🧒</span><span>רָם</span>',say:"רם",alts:["ראם"],tts:"רָם",audio:"audio/r4-2.mp3"},
+  {html:rebus("הַ","🥤","המיץ","מַר."),say:"המיץ מר",tts:"הַמִּיץ מַר.",audio:"audio/r4-3.mp3"},
+  {html:rebus("הַ","💊","התרופה","מָרָה."),say:"התרופה מרה",tts:"הַתְּרוּפָה מָרָה.",audio:"audio/r4-4.mp3"},
+  {html:'<span>בָּר בָּהָר.</span><span class="pic">⛰️</span>',say:"בר בהר",alts:["באר בהר","בר בהר"],tts:"בָּר בָּהָר.",audio:"audio/r4-5.mp3"},
+  {html:rebus("הַ","🧑‍🤝‍🧑","מקהלה","בַּבָּמָה."),say:"המקהלה בבמה",alts:["המקהלה בבימה"],tts:"הַמַּקְהֵלָה בַּבָּמָה.",audio:"audio/r4-6.mp3"}
 ];
 R4.forEach(it=>readingCard($("r4"),it,"check"));
 
 const R6=[
-  {html:'<span>בָּר בָּנָה בָּמָה.</span>',say:"בר בנה במה",alts:["באר בנה במה","בר בנה בימה"]},
-  {html:'<span>רָמָה שָׁרָה בַּנָּהָר.</span>',say:"רמה שרה בנהר"},
-  {html:'<span>רָן שָׁמַר בָּנָנָה מָרָה.</span>',say:"רן שמר בננה מרה"}
+  {html:'<span>בָּר בָּנָה בָּמָה.</span>',say:"בר בנה במה",alts:["באר בנה במה","בר בנה בימה"],tts:"בָּר בָּנָה בָּמָה.",audio:"audio/r6-1.mp3"},
+  {html:'<span>רָמָה שָׁרָה בַּנָּהָר.</span>',say:"רמה שרה בנהר",tts:"רָמָה שָׁרָה בַּנָּהָר.",audio:"audio/r6-2.mp3"},
+  {html:'<span>רָן שָׁמַר בָּנָנָה מָרָה.</span>',say:"רן שמר בננה מרה",tts:"רָן שָׁמַר בָּנָנָה מָרָה.",audio:"audio/r6-3.mp3"}
 ];
 R6.forEach(it=>readingCard($("r6"),it,"smile"));
 
