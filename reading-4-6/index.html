@@ -370,7 +370,7 @@ try{
 }catch(e){}
 if(!NativeSR) engineEl.textContent="";
 
-let cur=null, lastNativeAbort=0; // {btn,fb,targets,onOk,heard,partial,finished,timer}
+let cur=null; // {btn,fb,targets,onOk,heard,partial,finished,timer}
 function setBtn(btn,on){btn.classList.toggle("on",on);btn.innerHTML=on?"⏹ סיימתי":"🎤 קראו בקול";btn.setAttribute("aria-pressed",on?"true":"false")}
 function finish(session,texts){
   if(!session||session.finished) return; session.finished=true;
@@ -410,7 +410,7 @@ function listen(btn,fb,targets,onOk){
     else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){finish(s,s.all)} if(!s.alive) finish(s,s.all) }
     return;
   }
-  if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.rec){ old.stopReq=true; lastNativeAbort=Date.now(); try{old.rec.abort()}catch(e){} } old.finished=true; setBtn(old.btn,false); cur=null; }
+  if(cur){ const old=cur; if(old.engine==="dict") dict&&dict.stop().catch(()=>{}); else if(old.rec){ old.stopReq=true; try{old.rec.abort()}catch(e){} } old.finished=true; setBtn(old.btn,false); cur=null; }
   const s={btn,fb,targets,onOk,heard:"",partial:"",all:[],finished:false};
   cur=s; setBtn(btn,true); say(fb,"info","מקשיב… קראו עכשיו");
   s.timer=setTimeout(()=>{ if(cur===s){ if(s.engine==="dict") dict.stop().catch(()=>{}); else if(s.rec){ s.stopReq=true; try{s.rec.stop()}catch(e){} } } },15000);
@@ -429,74 +429,75 @@ function listen(btn,fb,targets,onOk){
     });
     return;
   }
-  if(NativeSR&&!nativeBlocked){ if(lastNativeAbort&&Date.now()-lastNativeAbort<400) setTimeout(()=>{ if(cur===s) startNative(s) },400); else startNative(s); return }
+  if(NativeSR&&!nativeBlocked){ startNative(s); return }
   noEngine(s,"בדפדפן הזה אין בדיקת קריאה. "+openHint()+" או סמנו ✓ ידנית.");
 }
 const IN_APP=/WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
 const IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function openHint(){ return IS_IOS?"פתחו את הקישור בספארי (⋯ ← פתיחה בספארי).":"פתחו את הקישור בכרום (⋮ ← פתיחה בכרום)."; }
-// One shared recognizer for the whole page. iPhone Safari often ignores a second
-// recognizer object after the first one has run, so we reuse a single instance
-// and only start it again once the previous run has fully ended.
-let REC=null, recOwner=null, recBusy=false, recBusySince=0, stallCount=0;
-function getRec(){
-  if(REC) return REC;
-  REC=new NativeSR(); REC.lang="he-IL"; REC.interimResults=true; REC.maxAlternatives=5; REC.continuous=false;
-  const alive=()=>{ const s=recOwner; if(s){ s.alive=true; clearTimeout(s.watch) } stallCount=0; };
-  REC.onstart=alive; REC.onaudiostart=alive;
-  REC.onresult=ev=>{
-    const s=recOwner; if(!s||s.finished) return; alive();
+// Version + optional diagnostics: open the page with ?debug to see what the phone's speech engine does.
+const PAGE_VER="3";
+const DEBUG=/[?&]debug/.test(location.search);
+let dbgEl=null;
+function dbg(m){ if(!DEBUG) return; if(!dbgEl){ dbgEl=document.createElement("pre"); dbgEl.dir="ltr"; dbgEl.style.cssText="font:11px/1.4 monospace;white-space:pre-wrap;background:#fff8;border:1px solid #ccc;padding:8px;margin:12px;max-height:40vh;overflow:auto;text-align:left"; document.body.appendChild(dbgEl); dbgEl.textContent="v"+PAGE_VER+" | "+navigator.userAgent+"\n"; } const t=new Date(); dbgEl.textContent+=t.toTimeString().slice(0,8)+"."+String(t.getMilliseconds()).padStart(3,"0")+" "+m+"\n"; dbgEl.scrollTop=1e9; }
+if(DEBUG) window.addEventListener("load",()=>dbg("SR="+(NativeSR?"yes":"no")+" iOS="+IS_IOS+" inApp="+IN_APP));
+
+// iPhone Safari only starts the microphone when start() runs directly inside the
+// child's tap, and it ignores a recognizer whose previous run never ended.
+// So: start synchronously in the tap, reuse the recognizer only if its last run ended,
+// otherwise throw it away and make a fresh one. On iPhone, listen continuously instead
+// of restarting after pauses (restarts outside a tap are ignored there).
+let REC=null, recEnded=true;
+function makeRec(){ const r=new NativeSR(); r.lang="he-IL"; r.interimResults=true; r.maxAlternatives=5; r.continuous=IS_IOS; return r; }
+function bindRec(rec,s){
+  const alive=ev=>{ dbg(ev.type); if(s.rec===rec){ s.alive=true; clearTimeout(s.watch) } };
+  rec.onstart=alive; rec.onaudiostart=alive;
+  rec.onresult=ev=>{
+    if(s.rec!==rec||s.finished) return; s.alive=true; clearTimeout(s.watch);
     const texts=[]; let joined="";
     for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; joined+=" "+r[0].transcript; for(let k=0;k<r.length;k++) texts.push(r[k].transcript) }
-    texts.unshift(joined); s.all=s.prevAll.concat(texts);
-    if(texts.some(t=>grade(s.targets,t)==="ok")){ s.stopReq=true; try{REC.abort()}catch(e){} finish(s,texts) }
+    texts.unshift(joined); s.all=s.prevAll.concat(texts); dbg("result: "+joined.trim());
+    if(texts.some(t=>grade(s.targets,t)==="ok")){ s.stopReq=true; try{rec.abort()}catch(e){} finish(s,texts) }
     else say(s.fb,"info","מקשיב… "+joined.trim());
   };
-  REC.onerror=ev=>{
-    const s=recOwner; if(!s||s.finished) return;
+  rec.onerror=ev=>{
+    dbg("error: "+ev.error);
+    if(s.rec!==rec||s.finished) return;
     if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){
-      nativeBlocked=true; s.stopReq=true;
+      s.stopReq=true;
       noEngine(s, IN_APP?"כאן אין גישה למיקרופון. "+openHint()
         : IS_IOS?"אין גישה למיקרופון. באייפון צריך להפעיל את Siri והכתבה (הגדרות ← כללי ← מקלדת ← הפעלת הכתבה) ולאשר מיקרופון. אפשר גם לסמן ✓ ידנית."
         : "אין גישה למיקרופון. אשרו גישה למיקרופון בדפדפן, או סמנו ✓ ידנית.");
     }
     else if(ev.error==="network"){ s.stopReq=true; noEngine(s,"בדיקת הקריאה צריכה חיבור לאינטרנט. נסו שוב."); }
     else if(ev.error==="audio-capture"){ s.stopReq=true; noEngine(s,"המיקרופון תפוס או לא נמצא. סגרו אפליקציות אחרות ונסו שוב."); }
-    // no-speech / aborted: onend decides whether to keep listening
   };
-  REC.onend=()=>{
-    recBusy=false; const s=recOwner; if(!s||s.finished) return;
-    clearTimeout(s.watch);
-    // Phones stop after a short pause. Keep listening until 15s or "סיימתי".
-    if(!s.stopReq&&Date.now()<s.deadline-800){ s.prevAll=s.all.slice(); setTimeout(()=>{ if(!s.finished&&cur===s) startNative(s) },250); return }
+  rec.onend=()=>{
+    dbg("end"); if(rec===REC) recEnded=true;
+    if(s.rec!==rec||s.finished) return; clearTimeout(s.watch);
+    // Android stops after a short pause: keep listening until 15s or "סיימתי".
+    if(!IS_IOS&&!s.stopReq&&Date.now()<s.deadline-800){ s.prevAll=s.all.slice(); setTimeout(()=>{ if(!s.finished&&cur===s) startNative(s) },250); return }
     finish(s,s.all);
   };
-  return REC;
 }
-function startNative(s,tries){
-  tries=tries||0;
+function startNative(s){
   s.engine="native"; if(!s.deadline) s.deadline=Date.now()+15000; if(!s.prevAll) s.prevAll=[]; if(!s.all) s.all=[];
-  let rec; try{ rec=getRec() }catch(e){ nativeBlocked=true; noEngine(s,"בדפדפן הזה אין בדיקת קריאה. "+openHint()+" או סמנו ✓ ידנית."); return }
-  s.rec=rec;
-  if(recBusy){ // previous run still closing: nudge it and wait
-    if(Date.now()-recBusySince>2000){ recBusy=false } // iPhone sometimes never reports the end
-    else { try{rec.abort()}catch(e){} setTimeout(()=>{ if(!s.finished&&cur===s) startNative(s,tries) },300); return }
-  }
-  try{ s.alive=false; rec.start(); recOwner=s; recBusy=true; recBusySince=Date.now() }
+  s.alive=false;
+  if(REC&&!recEnded){ dbg("previous run not ended: abort + fresh recognizer"); try{REC.abort()}catch(e){} REC=null; }
+  const tryStart=()=>{ const r=REC||makeRec(); REC=r; s.rec=r; bindRec(r,s); r.start(); recEnded=false; dbg("start ok"); };
+  try{ tryStart() }
   catch(e){
-    if(tries<3){ try{rec.abort()}catch(_){} setTimeout(()=>{ if(!s.finished&&cur===s) startNative(s,tries+1) },400); }
-    else noEngine(s,"לא הצלחתי להפעיל את המיקרופון. נסו שוב בעוד רגע.");
-    return;
+    dbg("start threw: "+(e&&e.name)); try{REC&&REC.abort()}catch(_){} REC=null;
+    try{ tryStart() }catch(e2){ dbg("second start threw: "+(e2&&e2.name)); REC=null; recEnded=true; noEngine(s, NativeSR?"לא הצלחתי להפעיל את המיקרופון. לחצו שוב על 🎤.":"בדפדפן הזה אין בדיקת קריאה. "+openHint()+" או סמנו ✓ ידנית."); return }
   }
-  // Watchdog: if the microphone never actually turns on, reset and tell the child what to do.
+  // Watchdog: the microphone never turned on. Reset so the next tap starts clean.
   clearTimeout(s.watch);
   s.watch=setTimeout(()=>{
     if(s.finished||s.alive||cur!==s) return;
-    try{REC.abort()}catch(e){} recBusy=false;
-    stallCount++;
-    if(stallCount>=2){ REC=null; stallCount=0; s.stopReq=true; noEngine(s,"המיקרופון לא נפתח. רעננו את הדף ונסו שוב, או סמנו ✓ ידנית."); }
-    else if(tries<3) startNative(s,tries+1);
-  },3000);
+    dbg("watchdog: no start event in 3.5s");
+    try{REC&&REC.abort()}catch(e){} REC=null; recEnded=true; s.stopReq=true;
+    noEngine(s,"המיקרופון לא נפתח. לחצו שוב על 🎤 (ואם זה חוזר, רעננו את הדף).");
+  },3500);
 }
 function micButton(fb,targets,onOk){
   const b=document.createElement("button"); b.type="button"; b.className="mic"; setBtn(b,false);
