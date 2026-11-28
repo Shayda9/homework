@@ -138,44 +138,12 @@ header{display:flex;flex-direction:column;gap:14px;padding-top:6px}
 .smile.on circle.face{fill:var(--pencil)}
 .smile .feat{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round}
 
-/* writing practice (1st grade) */
-@font-face{font-family:"KtavYad";src:url("../fonts/KtavYadCLM-MediumItalic.ttf") format("truetype");font-display:block}
-.cur{font-family:"KtavYad",var(--f-nq)}
-.wgroup{display:flex;flex-direction:column;gap:6px}
-.wgroup h3,.wsum{font-size:14px;color:var(--soft);font-weight:600}
-.wsum{cursor:pointer;padding:4px 0}
-details.wgroup[open] .wsum{margin-bottom:4px}
-.wchips{display:flex;flex-wrap:wrap;gap:8px}
-.wchip{position:relative;border:2px solid var(--line);background:var(--sheet);border-radius:16px;min-width:56px;padding:2px 14px;font-size:30px;line-height:1.45;cursor:pointer;color:var(--ink)}
-.wchips.small .wchip{font-size:22px;min-width:0}
-.wchip[aria-current="true"]{border-color:var(--accent);background:var(--accent-bg)}
-.wchip .stk{position:absolute;top:-12px;left:-10px;font-size:22px;line-height:1;font-family:var(--f-ui)}
-.wcard{display:flex;flex-direction:column;gap:12px;max-width:560px;width:100%;align-self:center}
-.wtop{display:flex;align-items:center;gap:8px}
-.wtop .nav,.wtop .ico{border:1.5px solid var(--line);background:var(--sheet);border-radius:99px;width:48px;height:48px;cursor:pointer;font-size:22px;padding:0;display:grid;place-items:center}
-.wtop .nav:disabled{opacity:.3;cursor:default}
-.wtop .wpos{flex:1;text-align:center;color:var(--soft);font-size:14px}
-.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.steps button{border:2px solid var(--line);background:var(--sheet);border-radius:16px;padding:8px 4px;cursor:pointer;font-size:15px;line-height:1.2;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px}
-.steps button span{font-size:26px}
-.steps button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:700}
-.steps button.done::after{content:"✓";color:var(--ok);font-weight:800;font-size:18px}
-.pad{position:relative;width:100%;border-radius:18px;overflow:hidden;border:2px solid #E8E2CF;background:#FFFDF6;touch-action:none}
-.pad canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.pad canvas.anim{pointer-events:none}
-.tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center}
-.tools .tb{border:1.5px solid var(--line);background:var(--sheet);border-radius:99px;min-width:56px;height:52px;padding:0 14px;cursor:pointer;font-size:24px;color:var(--ink);display:flex;align-items:center;gap:6px}
-.tools .tb small{font-size:13px;color:var(--soft)}
-.tools .pens{display:flex;gap:8px}
-.tools .pen{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer;padding:0}
-.tools .pen[aria-pressed="true"]{border-color:var(--ink)}
-.wdone{align-self:stretch;border:none;border-radius:18px;background:var(--ok);color:#fff;font-weight:800;font-size:22px;padding:12px;cursor:pointer}
-.wnext{border:2px solid var(--ok);background:var(--ok-bg);color:var(--ok);border-radius:18px;padding:10px;font-weight:700;cursor:pointer;font-size:18px}
-.wfb{text-align:center;font-size:17px}
-.book{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:36px;padding:6px;border-radius:14px;background:var(--accent-bg)}
-.book span{font-size:26px;line-height:1;animation:pop .5s ease-out}
-.book .empty{font-size:14px;color:var(--soft);align-self:center}
-@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
+/* navigation: back to all homework + link to the other exercise of the same week */
+.crumb{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;color:var(--accent);text-decoration:none;font-size:15px;font-weight:500;padding:6px 0;min-height:32px}
+.crumb:hover{text-decoration:underline}
+.nextex{display:block;background:var(--sheet);border:2px solid var(--accent);border-radius:16px;padding:16px 18px;color:var(--ink);text-decoration:none;font-size:19px;font-weight:700}
+.nextex small{display:block;color:var(--soft);font-size:14px;font-weight:400;margin-top:4px}
+.nextex:hover{background:var(--accent-bg)}
 .party{display:none;background:var(--ok-bg);color:var(--ok);border-radius:16px;padding:18px;text-align:center;font-size:20px;font-weight:700}
 .party.show{display:block}
 footer{text-align:center;color:var(--soft);font-size:13px;display:flex;flex-direction:column;gap:4px}
@@ -191,6 +159,7 @@ footer{text-align:center;color:var(--soft);font-size:13px;display:flex;flex-dire
 </style>
 
 <div class="wrap">
+  <a class="crumb" href="../">🏠 כל שיעורי הבית</a>
   <div class="bar" role="group" aria-label="התקדמות">
     <div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
     <div class="count" id="count">0 / 0 ⭐</div>
@@ -198,7 +167,7 @@ footer{text-align:center;color:var(--soft);font-size:13px;display:flex;flex-dire
   </div>
 
   <header>
-    <h1 class="title">דַּף קְרִיאָה לְשַׁבָּת<small>דפים 4, 5, 6 · כיתה א׳</small></h1>
+    <h1 class="title">דַּף קְרִיאָה לְשַׁבָּת<small>דפים 4, 5, 6 · כיתה א׳ · תרגיל 1 מתוך 2</small></h1>
     <div class="note">
       <div class="from">הודעה מהמורה</div>
       <p>הורים יקרים, מצורפים שלושה דפי קריאה לתרגול למהלך השבוע הקרוב. מוזמנים לעבוד עם הילדים, לקרוא מספר פעמים במשך מספר ימים (כן, גם אם כבר יודעים בעל פה, החשיפה למילים ולצלילים חשובה).</p>
@@ -258,19 +227,10 @@ footer{text-align:center;color:var(--soft);font-size:13px;display:flex;flex-dire
     </div>
   </section>
 
-  <!-- ===== תרגול כתיבה ===== -->
-  <section class="sheet" aria-labelledby="sw">
-    <div class="sheet-h"><h2 id="sw">תִּרְגּוּל כְּתִיבָה</h2><span class="num">כְּתַב יָד</span></div>
-    <div class="task">
-      <div class="ask nq">כּוֹתְבִים בִּכְתַב יָד עִם הָאֶצְבַּע ✍️</div>
-      <p class="hint">מתחילים באותיות, ממשיכים למילים. הנקודה הירוקה מראה איפה מתחילים, והחצים מראים לאן ממשיכים. ▶️ מראה איך כותבים. על כל אות ומילה מקבלים מדבקה.</p>
-      <div id="wpick"></div>
-      <div class="wcard" id="wcard"></div>
-      <div class="book" id="wbook" aria-label="המדבקות שלי"><span class="empty">המדבקות שלי יופיעו כאן ⭐</span></div>
-    </div>
-  </section>
+  <div class="party" id="party" aria-live="polite">כָּל הַכָּבוֹד! סִיַּמְתֶּם אֶת כָּל דַּפֵּי הַקְּרִיאָה 🎉</div>
 
-  <div class="party" id="party" aria-live="polite">כָּל הַכָּבוֹד! סִיַּמְתֶּם אֶת כָּל דַּפֵּי הַקְּרִיאָה וְהַכְּתִיבָה 🎉</div>
+  <a class="nextex" href="../writing-4-6/">תרגיל 2 לשבת: תרגול כתיבה ✍️ ←<small>כותבים בכתב יד עם האצבע: אותיות, מילים ומשפטים</small></a>
+
 
   <footer>
     <div>© כל הזכויות שמורות לטלי שנידמן</div>
@@ -492,7 +452,7 @@ const IN_APP=/WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
 const IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function openHint(){ return IS_IOS?"פתחו את הקישור בספארי (⋯ ← פתיחה בספארי).":"פתחו את הקישור בכרום (⋮ ← פתיחה בכרום)."; }
 // Version + optional diagnostics: open the page with ?debug to see what the phone's speech engine does.
-const PAGE_VER="9";
+const PAGE_VER="10";
 // Bump VOICE_VER whenever the recordings change, so phones fetch the new files instead of old cached ones.
 const VOICE_VER="eilai-3";
 const clipUrl=u=>u+"?v="+VOICE_VER;
@@ -767,255 +727,6 @@ W5.forEach((w,i)=>{
   box.append(h,micButton(fb,[w.say].concat(w.alts||[]),()=>setOn(true)),fb);
   $("words").appendChild(box);
 });
-
-/* ---------- writing practice (handwriting, 1st grade) ---------- */
-// The pad is laid out on a 1000-unit-wide grid and scaled to the screen, so strokes stay put when the phone rotates.
-(function(){
-// How each letter is written, in em units from the glyph's origin (x right, y up from the baseline).
-// Each inner list is one stroke, in the order it is written. The first point is the green start dot.
-const LPATHS={
-  "נ":[[[0.375,0.485],[0.25,0.2],[0.15,-0.1],[0.05,-0.275],[-0.1,-0.375],[-0.225,-0.36],[-0.375,-0.25]]],
-  "ר":[[[0.15,0.31],[0.275,0.46],[0.425,0.5],[0.575,0.45],[0.65,0.3],[0.625,0.15],[0.525,0.0]]],
-  "מ":[[[0.825,0.615],[0.7,0.35],[0.575,0.1],[0.51,0.015],[0.44,0.075],[0.35,0.275],[0.285,0.375],[0.215,0.3],[0.09,0.025]]],
-  "ב":[[[0.16,0.4],[0.3,0.47],[0.5,0.49],[0.675,0.45],[0.775,0.3],[0.775,0.15],[0.675,0.025],[0.575,0.025],[0.475,0.125],[0.39,0.185],[0.315,0.125],[0.26,0.04]]],
-  "ה":[[[0.16,0.375],[0.3,0.45],[0.475,0.485],[0.65,0.45],[0.75,0.3],[0.74,0.15],[0.65,0.0]],[[0.29,0.16],[0.375,0.15],[0.39,0.09],[0.325,0.015]]]
-};
-const GROUPS=[
-  {k:"letter",title:"אותיות",items:[{t:"נ",audio:"audio/l-nun.mp3"},{t:"ר",audio:"audio/l-resh.mp3"},{t:"מ",audio:"audio/l-mem.mp3"},{t:"ב",audio:"audio/l-bet.mp3"},{t:"ה",audio:"audio/l-he.mp3"}]},
-  {k:"word",title:"מילים",items:[{t:"בר",audio:"audio/w5-1.mp3"},{t:"רן",audio:"audio/w5-2.mp3"},{t:"רם",audio:"audio/w5-3.mp3"},{t:"בנה",audio:"audio/w5-4.mp3"},{t:"מנה",audio:"audio/w5-5.mp3"},{t:"נהר",audio:"audio/w5-6.mp3"},{t:"במבה",audio:"audio/w5-7.mp3"}]},
-  {k:"sent",title:"⭐ אתגר: משפטים (לא חובה)",items:[{t:"רמה",audio:"audio/r4-1.mp3"},{t:"המיץ מר",audio:"audio/r4-3.mp3"},{t:"התרופה מרה",audio:"audio/r4-4.mp3"},{t:"בר בהר",audio:"audio/r4-5.mp3"},{t:"המקהלה בבמה",audio:"audio/r4-6.mp3"},{t:"בר בנה במה",audio:"audio/r6-1.mp3"},{t:"רמה שרה בנהר",audio:"audio/r6-2.mp3"},{t:"רן שמר בננה מרה",audio:"audio/r6-3.mp3"}]}
-];
-const WR=[]; GROUPS.forEach(g=>g.items.forEach(it=>{ it.k=g.k; WR.push(it) }));
-const INST=["audio/i-trace.mp3","audio/i-alone.mp3"];
-const SAY_OK="audio/i-great.mp3", SAY_RETRY="audio/i-again.mp3";
-const STICKERS=["🦁","🐶","🐱","🦄","🐸","🐵","🐼","🐰","🦋","🐞","🐢","🐬","🦊","🐯","🐨","🐷","🐙","🐝","🦒","🐳"];
-const PENS=["#1D3C8F","#7B3FC4","#D2452F","#1F8F5F"];
-const FONT="KtavYad", U=1000, PENW=26;
-let FS=170, LH=280, TOP=40;
-const GUIDE="#BFD0EE", FAINT="rgba(29,60,143,.22)", HINT="#F29D38", START="#22A45D";
-let cur=0, step=0, pen=PENS[0], stickerN=0;
-const strokes={}, stepsDone=WR.map(()=>new Set()), sticker=WR.map(()=>null);
-const key=()=>cur+":"+step, list=()=>strokes[key()]||(strokes[key()]=[]);
-WR.forEach((w,i)=>{ if(w.k!=="sent") unit("write:"+i) }); // sentences are a bonus, not needed for the progress bar
-
-// play a short Eilai clip (instructions, praise) without a button
-let voice=null;
-function sayClip(url){ try{ voice&&voice.stop() }catch(e){} stopSpeaking(); voice=playClip(url,()=>{voice=null},()=>{voice=null}) }
-
-// item picker, in three groups
-const chips=[];
-GROUPS.forEach(g=>{
-  const box=document.createElement(g.k==="sent"?"details":"div"); box.className="wgroup";
-  box.innerHTML=g.k==="sent"?'<summary class="wsum">'+esc(g.title)+"</summary>":"<h3>"+esc(g.title)+"</h3>"; const row=document.createElement("div"); row.className="wchips"+(g.k==="letter"?"":" small");
-  g.items.forEach(it=>{ const i=WR.indexOf(it); const b=document.createElement("button"); b.type="button"; b.className="wchip cur"; b.textContent=it.t;
-    b.setAttribute("aria-label","כתיבה: "+it.t); b.addEventListener("click",()=>go(i,0)); row.appendChild(b); chips[i]=b; });
-  box.appendChild(row); $("wpick").appendChild(box);
-});
-$("wpick").style.cssText="display:flex;flex-direction:column;gap:12px";
-
-// card
-const card=$("wcard");
-card.innerHTML='<div class="wtop"><button type="button" class="nav" id="wprev" aria-label="הקודם">→</button><span id="wspk"></span><span class="wpos" id="wpos"></span><button type="button" class="ico" id="winst" aria-label="מה עושים?">❔</button><button type="button" class="nav" id="wnext" aria-label="הבא">←</button></div>'+
-  '<div class="steps" id="wsteps"><button type="button"><span>✏️</span>עוברים על הקו</button><button type="button"><span>⭐</span>כותבים לבד</button></div>'+
-  '<div class="pad" id="wpad"><canvas id="wbg"></canvas><canvas id="wink" aria-label="משטח כתיבה"></canvas><canvas id="wanim" class="anim"></canvas></div>'+
-  '<div class="tools"><button type="button" class="tb" id="wshow" aria-label="הראו לי איך כותבים">▶️</button><button type="button" class="tb" id="wpeek" aria-label="להציץ בדוגמה" hidden>👀</button><button type="button" class="tb" id="wundo" aria-label="בטל קו">↩️</button><button type="button" class="tb" id="wclear" aria-label="מחק הכל">🧽</button><div class="pens" id="wpens"></div></div>'+
-  '<button type="button" class="wdone" id="wdone">✓ סיימתי</button>'+
-  '<div class="fb wfb" id="wfb" aria-live="polite"></div>'+
-  '<button type="button" class="wnext" id="wgo" hidden></button>';
-const stepBtns=[...$("wsteps").children];
-stepBtns.forEach((b,i)=>b.addEventListener("click",()=>{ go(cur,i); sayClip(INST[i]) }));
-PENS.forEach((c,i)=>{ const b=document.createElement("button"); b.type="button"; b.className="pen"; b.style.background=c; b.setAttribute("aria-label","צבע עט "+(i+1));
-  b.setAttribute("aria-pressed",i===0?"true":"false");
-  b.addEventListener("click",()=>{ pen=c; [...$("wpens").children].forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false")) }); $("wpens").appendChild(b); });
-$("winst").addEventListener("click",()=>sayClip(INST[step]));
-
-const pad=$("wpad"), bg=$("wbg"), ink=$("wink"), anim=$("wanim"), fb=$("wfb");
-let layout=null, scale=1, dpr=1, peeking=false;
-
-// ---- layout: big letters for single letters and words, wrapped lines for sentences ----
-const meas=document.createElement("canvas").getContext("2d");
-function doLayout(text){
-  const maxW=U-100; const single=text.indexOf(" ")<0;
-  meas.font="100px "+FONT; const w100=meas.measureText(text).width;
-  FS=single?Math.min(text.length===1?640:300,Math.floor(maxW*100/w100)):170;
-  LH=Math.round(FS*1.6); TOP=Math.round(FS*(text.length===1?.2:.3));
-  meas.font=FS+"px "+FONT; const sp=meas.measureText(" ").width;
-  const lines=[]; let line=[], w=0;
-  text.split(" ").forEach(word=>{ const ww=meas.measureText(word).width;
-    if(line.length&&w+sp+ww>maxW){ lines.push(line.join(" ")); line=[word]; w=ww } else { w+=(line.length?sp:0)+ww; line.push(word) } });
-  if(line.length) lines.push(line.join(" "));
-  const xh=meas.measureText("ר").actualBoundingBoxAscent||FS*.5;
-  const base=lines.map((l,i)=>TOP+FS*.7+i*LH);
-  // where each letter sits, so the start dots and arrows land on it (right to left)
-  const glyphs=[];
-  lines.forEach((l,li)=>{ const total=meas.measureText(l).width, right=U/2+total/2;
-    for(let k=0;k<l.length;k++){ const ch=l[k]; if(!LPATHS[ch]) continue;
-      glyphs.push({ch,ox:right-meas.measureText(l.slice(0,k+1)).width,by:base[li]}) } });
-  return {lines,base,xh,glyphs,h:base[base.length-1]+FS*.55};
-}
-const gpt=(g,p)=>[g.ox+p[0]*FS,g.by-p[1]*FS];
-function drawText(ctx,fill,strokeW){
-  ctx.font=FS+"px "+FONT; ctx.textAlign="center"; ctx.textBaseline="alphabetic"; try{ctx.direction="rtl"}catch(e){}
-  layout.lines.forEach((l,i)=>{ if(strokeW){ ctx.lineWidth=strokeW; ctx.lineJoin="round"; ctx.strokeStyle=fill; ctx.strokeText(l,U/2,layout.base[i]) } ctx.fillStyle=fill; ctx.fillText(l,U/2,layout.base[i]) });
-}
-function drawStroke(ctx,s,w,color){
-  ctx.strokeStyle=color||s.c; ctx.lineWidth=w; ctx.lineCap="round"; ctx.lineJoin="round";
-  const p=s.pts; ctx.beginPath(); ctx.moveTo(p[0][0],p[0][1]);
-  if(p.length===1) ctx.lineTo(p[0][0]+.1,p[0][1]); for(let k=1;k<p.length;k++) ctx.lineTo(p[k][0],p[k][1]); ctx.stroke();
-}
-function arrowAt(c,a,b,size){
-  const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), m=[(a[0]+b[0])/2,(a[1]+b[1])/2];
-  c.fillStyle=HINT; c.beginPath();
-  c.moveTo(m[0]+Math.cos(ang)*size,m[1]+Math.sin(ang)*size);
-  c.lineTo(m[0]+Math.cos(ang+2.5)*size,m[1]+Math.sin(ang+2.5)*size);
-  c.lineTo(m[0]+Math.cos(ang-2.5)*size,m[1]+Math.sin(ang-2.5)*size); c.closePath(); c.fill();
-}
-function drawHints(c){
-  const r=Math.max(14,FS*.05), multi=layout.glyphs.length>1;
-  layout.glyphs.forEach(g=>LPATHS[g.ch].forEach((s,si)=>{
-    const pts=s.map(p=>gpt(g,p));
-    // arrows a bit after the start and around the middle of each stroke
-    if(!multi) [Math.floor(pts.length*.3),Math.floor(pts.length*.7)].filter((v,i,a)=>v>0&&a.indexOf(v)===i).forEach(k=>arrowAt(c,pts[k-1],pts[k],Math.max(12,FS*.05)));
-    c.fillStyle=START; c.beginPath(); c.arc(pts[0][0],pts[0][1],r,0,Math.PI*2); c.fill();
-    if(LPATHS[g.ch].length>1&&!multi){ c.fillStyle="#fff"; c.font="bold "+Math.round(r*1.3)+"px Rubik,Arial"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(String(si+1),pts[0][0],pts[0][1]+1) }
-  }));
-}
-function size(){
-  const W=pad.clientWidth||320; scale=W/U; dpr=Math.min(window.devicePixelRatio||1,3);
-  const H=Math.round(layout.h*scale); pad.style.height=H+"px";
-  [bg,ink,anim].forEach(c=>{ c.width=Math.round(W*dpr); c.height=Math.round(H*dpr); c.getContext("2d").setTransform(dpr*scale,0,0,dpr*scale,0,0) });
-}
-function drawBg(){
-  const c=bg.getContext("2d"); c.clearRect(0,0,U,layout.h);
-  layout.base.forEach(y=>{
-    c.strokeStyle=GUIDE; c.lineWidth=4; c.setLineDash([]); c.beginPath(); c.moveTo(20,y); c.lineTo(U-20,y); c.stroke();
-    c.lineWidth=3; c.setLineDash([16,14]); c.beginPath(); c.moveTo(20,y-layout.xh); c.lineTo(U-20,y-layout.xh); c.stroke();
-  });
-  c.setLineDash([]);
-  if(step===0||peeking){ drawText(c,peeking?"rgba(29,60,143,.35)":FAINT); if(step===0) drawHints(c) }
-}
-function drawInk(){ const c=ink.getContext("2d"); c.clearRect(0,0,U,layout.h); list().forEach(s=>drawStroke(c,s,PENW)) }
-function render(){ stopShow(); layout=doLayout(WR[cur].t); size(); drawBg(); drawInk() }
-
-// ---- ▶️ show me: a pen draws each letter, stroke by stroke ----
-let showRAF=0;
-function stopShow(){ cancelAnimationFrame(showRAF); showRAF=0; const c=anim.getContext("2d"); c.clearRect(0,0,U,layout?layout.h:2000) }
-function showMe(){
-  stopShow(); const c=anim.getContext("2d");
-  const segs=[]; layout.glyphs.forEach(g=>LPATHS[g.ch].forEach(s=>segs.push(s.map(p=>gpt(g,p)))));
-  if(!segs.length){ drawText(c,"rgba(242,157,56,.8)"); setTimeout(stopShow,1500); return }
-  const lens=segs.map(p=>{ let L=0; for(let k=1;k<p.length;k++) L+=Math.hypot(p[k][0]-p[k-1][0],p[k][1]-p[k-1][1]); return L });
-  const speed=FS*1.4/1000; // units per ms
-  let si=0, t0=performance.now(); const done=[];
-  const frame=now=>{
-    c.clearRect(0,0,U,layout.h);
-    const drawPart=(p,upto,dot)=>{ c.strokeStyle=HINT; c.lineWidth=Math.max(18,FS*.06); c.lineCap="round"; c.lineJoin="round"; c.beginPath(); c.moveTo(p[0][0],p[0][1]);
-      let acc=0, end=p[0];
-      for(let k=1;k<p.length;k++){ const d=Math.hypot(p[k][0]-p[k-1][0],p[k][1]-p[k-1][1]);
-        if(acc+d>=upto){ const f=(upto-acc)/d; end=[p[k-1][0]+(p[k][0]-p[k-1][0])*f,p[k-1][1]+(p[k][1]-p[k-1][1])*f]; c.lineTo(end[0],end[1]); break }
-        acc+=d; c.lineTo(p[k][0],p[k][1]); end=p[k] }
-      c.stroke(); if(dot){ c.fillStyle="#C25E00"; c.beginPath(); c.arc(end[0],end[1],Math.max(16,FS*.055),0,Math.PI*2); c.fill() } };
-    done.forEach(k=>drawPart(segs[k],1e9,false));
-    const el=now-t0, upto=el*speed; drawPart(segs[si],upto,true);
-    if(upto>=lens[si]){ done.push(si); si++; t0=now+250; if(si>=segs.length){ setTimeout(stopShow,900); showRAF=0; c.clearRect(0,0,U,layout.h); done.forEach(k=>drawPart(segs[k],1e9,false)); return } }
-    showRAF=requestAnimationFrame(frame);
-  };
-  showRAF=requestAnimationFrame(frame);
-}
-$("wshow").addEventListener("click",showMe);
-$("wpeek").addEventListener("click",()=>{ peeking=true; drawBg(); setTimeout(()=>{ peeking=false; drawBg() },3000) });
-
-// ---- drawing ----
-let active=null, pid=null;
-function pt(e){ const r=ink.getBoundingClientRect(); return [(e.clientX-r.left)/scale,(e.clientY-r.top)/scale] }
-ink.addEventListener("pointerdown",e=>{
-  if(pid!==null) return; pid=e.pointerId; try{ink.setPointerCapture(pid)}catch(x){}
-  e.preventDefault(); stopShow(); active={c:pen,pts:[pt(e)]}; list().push(active); drawStroke(ink.getContext("2d"),active,PENW);
-  if(fb.classList.contains("retry")) say(fb,"info","");
-});
-ink.addEventListener("pointermove",e=>{
-  if(e.pointerId!==pid||!active) return; e.preventDefault();
-  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e]; const c=ink.getContext("2d");
-  (evs.length?evs:[e]).forEach(ev=>{ const p=pt(ev), q=active.pts[active.pts.length-1];
-    active.pts.push(p); c.strokeStyle=active.c; c.lineWidth=PENW; c.lineCap="round"; c.beginPath(); c.moveTo(q[0],q[1]); c.lineTo(p[0],p[1]); c.stroke() });
-});
-const up=e=>{ if(e.pointerId!==pid) return; pid=null; active=null };
-ink.addEventListener("pointerup",up); ink.addEventListener("pointercancel",up);
-ink.addEventListener("touchstart",e=>e.preventDefault(),{passive:false});
-$("wundo").addEventListener("click",()=>{ list().pop(); drawInk() });
-$("wclear").addEventListener("click",()=>{ strokes[key()]=[]; drawInk(); say(fb,"info","") });
-
-// ---- tracing check (forgiving): how much of the letters was covered, and how much ink strayed far away ----
-function traceScore(){
-  const k=.3, W=Math.round(U*k), H=Math.round(layout.h*k);
-  const mk=()=>{ const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d",{willReadFrequently:true}); x.setTransform(k,0,0,k,0,0); return x };
-  const glyph=mk(); drawText(glyph,"#000");
-  const fat=mk(); drawText(fat,"#000",Math.max(90,FS*.35));
-  const hit=mk(); list().forEach(s=>drawStroke(hit,s,Math.max(70,FS*.26),"#000"));
-  const thin=mk(); list().forEach(s=>drawStroke(thin,s,PENW,"#000"));
-  const a=x=>x.getImageData(0,0,W,H).data;
-  const G=a(glyph), F=a(fat), Hh=a(hit), T=a(thin);
-  let g=0,gc=0,t=0,ts=0;
-  for(let i=3;i<G.length;i+=4){ if(G[i]>128){ g++; if(Hh[i]>40) gc++ } if(T[i]>128){ t++; if(F[i]<40) ts++ } }
-  // a scribble covers the letter too, so also compare how much was drawn with how long the letter really is
-  const plen=s=>{ let L=0; for(let k=1;k<s.length;k++) L+=Math.hypot(s[k][0]-s[k-1][0],s[k][1]-s[k-1][1]); return L };
-  const known=WR[cur].t.replace(/ /g,"").split("").every(ch=>LPATHS[ch]);
-  const pathL=layout.glyphs.reduce((a,g)=>a+LPATHS[g.ch].reduce((b,s)=>b+plen(s.map(p=>gpt(g,p))),0),0);
-  const inkL=list().reduce((a,s)=>a+plen(s.pts),0);
-  return {cover:g?gc/g:0, stray:t?ts/t:1, over:(known&&pathL)?inkL/pathL:0};
-}
-
-// ---- stickers and steps ----
-function giveSticker(){
-  if(sticker[cur]) return;
-  const s=STICKERS[stickerN++%STICKERS.length]; sticker[cur]=s;
-  const tag=document.createElement("span"); tag.className="stk"; tag.textContent=s; chips[cur].appendChild(tag);
-  const book=$("wbook"); const e=book.querySelector(".empty"); if(e) e.remove();
-  const b=document.createElement("span"); b.textContent=s; book.appendChild(b);
-  const need=WR.filter(w=>w.k!=="sent").length, got=WR.filter((w,i)=>w.k!=="sent"&&sticker[i]).length;
-  if(got===need){ const r=pad.getBoundingClientRect(); for(let n=0;n<12;n++) setTimeout(()=>{ const d=document.createElement("div"); d.className="burst"; d.textContent=["🎉","⭐","🌟","🎊"][n%4];
-    d.style.left=(r.left+Math.random()*r.width)+"px"; d.style.top=(r.top+Math.random()*r.height)+"px"; document.body.appendChild(d); setTimeout(()=>d.remove(),950) },n*90) }
-}
-function markDone(msg){
-  stepsDone[cur].add(step); if(WR[cur].k!=="sent") done("write:"+cur,$("wdone")); else burst($("wdone"));
-  giveSticker(); say(fb,"ok",msg+" "+sticker[cur]); sayClip(SAY_OK);
-  stepBtns[step].classList.add("done");
-  const g=$("wgo");
-  if(step===0){ g.textContent="⭐ עכשיו לבד ←"; g.onclick=()=>{ go(cur,1); sayClip(INST[1]) } }
-  else if(cur<WR.length-1){ g.textContent=(WR[cur+1].k==="sent"&&WR[cur].k!=="sent")?"⭐ לאתגר ←":"להמשך ←"; g.onclick=()=>{ go(cur+1,0); sayClip(INST[0]) } }
-  else { g.textContent="🎉 סיימתם הכל!"; g.onclick=null }
-  g.hidden=false;
-}
-$("wdone").addEventListener("click",()=>{
-  if(!list().length){ say(fb,"retry","קודם כותבים עם האצבע ✍️"); return }
-  if(step===0){
-    const r=traceScore(); dbg("trace cover="+r.cover.toFixed(2)+" stray="+r.stray.toFixed(2)+" over="+r.over.toFixed(2));
-    if(r.cover>=.8&&r.stray<=.35&&r.over<=2.6) markDone(pick(["כל הכבוד!","יופי של כתיבה!","מצוין!"]));
-    else { say(fb,"retry",r.cover<.8?"כמעט! עברו גם על החלקים הבהירים 🙂":"נסו לכתוב בדיוק על הקו 🙂"); sayClip(SAY_RETRY) }
-  } else markDone(pick(["מדהים! כתבתם לבד!","וואו, כל הכבוד!"]));
-});
-
-function go(i,s){
-  stopSpeaking(); cur=i; step=s; peeking=false;
-  chips.forEach((c,j)=>c.setAttribute("aria-current",j===i?"true":"false"));
-  stepBtns.forEach((b,j)=>{ b.setAttribute("aria-pressed",j===s?"true":"false"); b.classList.toggle("done",stepsDone[i].has(j)) });
-  const w=WR[i], grp=GROUPS.find(g=>g.k===w.k), n=grp.items.indexOf(w)+1;
-  $("wpos").textContent=(w.k==="letter"?"אות ":w.k==="word"?"מילה ":"משפט ")+n+" מתוך "+grp.items.length;
-  $("wprev").disabled=i===0; $("wnext").disabled=i===WR.length-1;
-  const sp=$("wspk"); sp.innerHTML=""; const sb=speakButton({tts:w.t,audio:w.audio}); sb.setAttribute("aria-label","הקשיבו"); sp.appendChild(sb);
-  $("wshow").hidden=(s!==0); $("wpeek").hidden=(s!==1);
-  $("wgo").hidden=true; say(fb,"info",s===0?"שמים את האצבע על הנקודה הירוקה ועוברים על הקו.":"עכשיו כותבים לבד על השורה.");
-  render();
-}
-$("wprev").addEventListener("click",()=>go(Math.max(0,cur-1),0));
-$("wnext").addEventListener("click",()=>go(Math.min(WR.length-1,cur+1),0));
-
-let lastW=0;
-if(DEBUG) window.__wpaths=()=>layout.glyphs.map(g=>LPATHS[g.ch].map(s=>s.map(p=>{ const q=gpt(g,p); return [q[0]/U,q[1]/layout.h] })));
-if(window.ResizeObserver) new ResizeObserver(()=>{ const w=pad.clientWidth; if(w&&w!==lastW){ lastW=w; render() } }).observe(pad);
-go(0,0);
-if(document.fonts&&document.fonts.load) document.fonts.load("40px "+FONT,"אבג").then(()=>render()).catch(()=>{});
-})();
 
 $("reset").addEventListener("click",()=>{ location.reload() });
 renderProgress();
