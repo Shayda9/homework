@@ -440,7 +440,7 @@ const IN_APP=/WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
 const IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function openHint(){ return IS_IOS?"פתחו את הקישור בספארי (⋯ ← פתיחה בספארי).":"פתחו את הקישור בכרום (⋮ ← פתיחה בכרום)."; }
 // Version + optional diagnostics: open the page with ?debug to see what the phone's speech engine does.
-const PAGE_VER="5";
+const PAGE_VER="6";
 const DEBUG=/[?&]debug/.test(location.search);
 let dbgEl=null;
 function dbg(m){ if(!DEBUG) return; if(!dbgEl){ dbgEl=document.createElement("pre"); dbgEl.dir="ltr"; dbgEl.style.cssText="font:11px/1.4 monospace;white-space:pre-wrap;background:#fff8;border:1px solid #ccc;padding:8px;margin:12px;max-height:40vh;overflow:auto;text-align:left"; document.body.appendChild(dbgEl); dbgEl.textContent="v"+PAGE_VER+" | "+navigator.userAgent+"\n"; } const t=new Date(); dbgEl.textContent+=t.toTimeString().slice(0,8)+"."+String(t.getMilliseconds()).padStart(3,"0")+" "+m+"\n"; dbgEl.scrollTop=1e9; }
@@ -512,7 +512,7 @@ function stopListening(){
   s.stopReq=true; s.finished=true; clearTimeout(s.timer); clearTimeout(s.watch); setBtn(s.btn,false); say(s.fb,"info",""); cur=null;
 }
 function stopSpeaking(){
-  if(ttsAudio){ try{ttsAudio.pause()}catch(e){} ttsAudio=null }
+  if(ttsAudio){ try{ttsAudio.stop()}catch(e){} ttsAudio=null }
   try{ window.speechSynthesis&&speechSynthesis.cancel() }catch(e){}
   if(ttsBtn){ ttsBtn.classList.remove("on"); ttsBtn=null }
 }
@@ -522,6 +522,29 @@ function speakWithDevice(text,done){
   const v=speechSynthesis.getVoices().find(v=>/^he|^iw/i.test(v.lang)); if(v) u.voice=v;
   u.onend=done; u.onerror=done; speechSynthesis.speak(u);
 }
+// Play clips through Web Audio rather than an <audio> element. On iPhone an <audio>
+// element switches the phone's sound mode to "playback only", which silently cuts the
+// open listening session, so the next 🎤 tap heard nothing. Web Audio, together with
+// the "play-and-record" sound mode, lets the clip play while the microphone stays usable.
+let AC=null, lastPlayAt=0; const clipCache={};
+function getAC(){
+  try{ if(!AC){ const C=window.AudioContext||window.webkitAudioContext; if(C) AC=new C() } if(AC&&AC.state!=="running") AC.resume().catch(()=>{}) }catch(e){ AC=null }
+  return AC;
+}
+function keepMicDuringPlayback(){
+  try{ if(navigator.audioSession&&navigator.audioSession.type!=="play-and-record"){ navigator.audioSession.type="play-and-record" } dbg("audioSession="+(navigator.audioSession?navigator.audioSession.type:"n/a")) }catch(e){ dbg("audioSession error") }
+}
+function playClip(url,done,fail){
+  const ac=getAC(); if(!ac) return null;
+  let src=null, stopped=false;
+  const h={stop(){ stopped=true; try{src&&src.stop()}catch(e){} }};
+  (clipCache[url]||(clipCache[url]=fetch(url).then(r=>{ if(!r.ok) throw new Error("http "+r.status); return r.arrayBuffer() })
+      .then(buf=>new Promise((res,rej)=>ac.decodeAudioData(buf,res,rej)))))
+    .then(buf=>{ if(stopped) return; src=ac.createBufferSource(); src.buffer=buf; src.connect(ac.destination);
+      src.onended=()=>{ if(!stopped){ dbg("clip ended; mic session "+(IOS?(IOS.ended?"ended":"open"):"none")); done() } }; src.start(0); dbg("clip playing (web audio)") })
+    .catch(e=>{ delete clipCache[url]; dbg("clip failed: "+(e&&e.message)); if(!stopped) fail() });
+  return h;
+}
 function speakButton(item){
   const b=document.createElement("button"); b.type="button"; b.className="spk"; b.textContent="🔊"; b.setAttribute("aria-label","הקשיבו למשפט");
   b.addEventListener("click",()=>{
@@ -529,10 +552,13 @@ function speakButton(item){
     ttsBtn=b; b.classList.add("on"); dbg("speak: "+item.tts);
     const done=()=>{ if(ttsBtn===b){ b.classList.remove("on"); ttsBtn=null } ttsAudio=null };
     let fellBack=false; const fallback=()=>{ if(fellBack||ttsBtn!==b) return; fellBack=true; ttsAudio=null; dbg("audio file failed, using device voice"); speakWithDevice(item.tts,done) };
-    if(item.audio){
-      const a=new Audio(item.audio); ttsAudio=a; a.onended=done; a.onerror=fallback;
-      const pr=a.play(); if(pr&&pr.catch) pr.catch(fallback);
-    } else speakWithDevice(item.tts,done);
+    lastPlayAt=Date.now();
+    if(IS_IOS&&IOS&&!IOS.ended){ keepMicDuringPlayback(); dbg("mic session open during playback") }
+    const viaElement=()=>{ if(ttsBtn!==b) return; dbg("web audio failed, using <audio>");
+      const a=new Audio(item.audio); ttsAudio={stop(){ try{a.pause()}catch(e){} }}; a.onended=done; a.onerror=fallback;
+      const pr=a.play(); if(pr&&pr.catch) pr.catch(fallback); };
+    if(item.audio){ ttsAudio=playClip(item.audio,done,viaElement); if(!ttsAudio) viaElement(); }
+    else speakWithDevice(item.tts,done);
   });
   return b;
 }
@@ -550,7 +576,7 @@ function iosTexts(ev,from){
 }
 function iosOpen(){
   const rec=new NativeSR(); rec.lang="he-IL"; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=true;
-  const sess={rec,count:0,full:"",ended:false,started:false}; IOS=sess;
+  const sess={rec,count:0,full:"",ended:false,started:false,openedAt:Date.now()}; IOS=sess;
   const alive=ev=>{ dbg("ios "+ev.type); sess.started=true; if(cur&&cur.ios){ cur.alive=true; clearTimeout(cur.watch) } };
   rec.onstart=alive; rec.onaudiostart=alive;
   rec.onresult=ev=>{
@@ -577,6 +603,7 @@ function iosOpen(){
     dbg("ios end"); sess.ended=true; if(IOS===sess) IOS=null;
     const s=cur; if(s&&s.ios&&!s.finished){ clearTimeout(s.watch); finish(s,s.all) }
   };
+  if(lastPlayAt) keepMicDuringPlayback();
   rec.start(); dbg("ios start ok");
   return sess;
 }
@@ -590,6 +617,17 @@ function startIOS(s){
   s.from=sess.count; s.prefix=sess.full; // ignore anything said before this tap
   if(sess.started) s.alive=true;
   clearTimeout(s.watch);
+  // Safety net: if a clip played since this session opened and nothing at all is heard
+  // within 7s, the session has gone deaf. Close it so the next 🎤 tap opens a fresh one.
+  clearTimeout(s.deaf);
+  if(lastPlayAt&&sess.openedAt<lastPlayAt){
+    s.deaf=setTimeout(()=>{
+      if(s.finished||cur!==s||(s.all&&s.all.length)) return;
+      dbg("ios: nothing heard after playback, reopening on next tap");
+      try{sess.rec.abort()}catch(e){} if(IOS===sess) IOS=null;
+      noEngine(s,"לא שמעתי. לחצו שוב על 🎤 וקראו.");
+    },7000);
+  }
   s.watch=setTimeout(()=>{
     if(s.finished||s.alive||cur!==s) return;
     dbg("ios watchdog: mic never started");
